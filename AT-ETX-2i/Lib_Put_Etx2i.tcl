@@ -1603,8 +1603,14 @@ proc ShowPS {ps} {
   if {$ret!=0} {return $ret}
   if {$ps==1} {
     set res [regexp {1\s+[AD]C\s+([\w\s]+)\s2} $buffer - val]
+    if {$res==0} {
+      set res [regexp {1\s+[\-\s]+([\w\s]+)\s2} $buffer - val]
+    }
   } elseif {$ps==2} {
     set res [regexp {2\s+[AD]C\s+([\w\s]+)\sFAN} $buffer - val]
+    if {$res==0} {
+      set res [regexp {2\s+[\-\s]+([\w\s]+)\sFAN} $buffer - val]
+    }
   }
   if {$res==0} {
     return -1
