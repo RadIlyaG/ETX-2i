@@ -1,0 +1,103 @@
+configure     
+terminal
+timeout forever     
+exit
+
+port
+ethernet 2
+shutdown
+functional-mode user
+no shutdown
+exit
+exit
+
+
+flows
+
+classifier-profile "all" match-any
+match all
+exit
+
+flow "1_2"
+classifier "all"
+no policer
+ingress-port ethernet 1
+egress-port ethernet 2 queue 0 block 0/1
+no shutdown
+exit
+
+flow "2_1"
+classifier "all"
+no policer
+ingress-port ethernet 2
+egress-port ethernet 1 queue 0 block 0/1
+no shutdown
+exit
+
+flow "3_4"
+classifier "all"
+no policer
+ingress-port ethernet 3
+egress-port ethernet 4 queue 0 block 0/1
+no shutdown
+exit
+
+flow "4_3"
+classifier "all"
+no policer
+ingress-port ethernet 4
+egress-port ethernet 3 queue 0 block 0/1
+no shutdown
+exit
+
+flow "5_6"
+classifier "all"
+no policer
+ingress-port ethernet 5
+egress-port ethernet 6 queue 0 block 0/1
+no shutdown
+exit
+
+flow "6_5"
+classifier "all"
+no policer
+ingress-port ethernet 6
+egress-port ethernet 5 queue 0 block 0/1
+no shutdown
+exit
+
+flow "7_8"
+classifier "all"
+no policer
+ingress-port ethernet 7
+egress-port ethernet 8 queue 0 block 0/1
+no shutdown
+exit
+
+flow "8_7"
+classifier "all"
+no policer
+ingress-port ethernet 8
+egress-port ethernet 7 queue 0 block 0/1
+no shutdown
+exit
+
+flow "9_10"
+classifier "all"
+no policer
+ingress-port ethernet 9
+egress-port ethernet 10 queue 0 block 0/1
+no shutdown
+exit
+
+flow "10_9"
+classifier "all"
+no policer
+ingress-port ethernet 10
+egress-port ethernet 9 queue 0 block 0/1
+no shutdown
+exit
+exit all
+
+save 	
+

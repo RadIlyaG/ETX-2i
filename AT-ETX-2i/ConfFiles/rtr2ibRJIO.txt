@@ -1,0 +1,53 @@
+configure
+port
+svi 1
+name "SVI 1"
+no shutdown
+exit
+svi 2
+name "SVI 2"
+no shutdown
+exit
+exit
+flows
+classifier-profile "unt" match-any
+match untagged
+exit
+flow "in"
+classifier "unt"
+ingress-port ethernet 0/1
+egress-port svi 1
+no shutdown
+exit
+flow "out"
+classifier "unt"
+ingress-port svi 1
+egress-port ethernet 0/1 queue 0 block 0/1
+no shutdown
+exit
+flow "user-in"
+classifier "unt"
+ingress-port ethernet 0/2
+egress-port svi 2
+no shutdown
+exit
+flow "user-out"
+classifier "unt"
+ingress-port svi 2
+egress-port ethernet 0/2 queue 0 block 0/1
+no shutdown
+exit
+exit
+router 1
+name "Router#1"
+interface 1
+address 1.1.1.10/24
+bind svi 1
+no shutdown
+exit
+interface 2
+address 2.2.2.10/24
+bind svi 2
+no shutdown
+exit all
+

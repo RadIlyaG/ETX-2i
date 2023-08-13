@@ -1,0 +1,10 @@
+Hardware malfunction
+Exception
+ERROR ERROR           DDR FPGA FAILD INIT
+ERROR ERROR           DDR FPGA DB FAILD
+DDR FPGA FAILD INIT
+DDR FPGA DB FAILD
+  
+
+
+

@@ -1,0 +1,9 @@
+set gaGui(xy) +269+112
+set gaSet(entDUT) "ETX-2I/DC/19"
+set gaSet(DutInitName) "ETX-2I.DC.19.tcl"
+set gaSet(performShortTest) "0"
+set gaSet(eraseTitle) "0"
+set gaSet(ddrMultyQty) "5"
+set gaSet(DGTestQty) "3"
+set gaSet(DGTestLoopBreak) "1"
+set gaSet(performDownloadSteps) "1"

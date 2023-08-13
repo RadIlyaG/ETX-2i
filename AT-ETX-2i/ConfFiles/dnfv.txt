@@ -1,0 +1,103 @@
+exit all
+configure
+port
+ethernet 0/1
+egress-mtu 9000
+exit
+ethernet 0/2
+egress-mtu 9000
+shutdown
+functional-mode user
+no shutdown
+exit
+ethernet 0/3
+egress-mtu 9000
+exit
+ethernet 0/4
+egress-mtu 9000
+exit
+exit
+
+flows
+classifier-profile "mng_all" match-any
+match all
+exit
+classifier-profile "mng_untagged" match-any
+match untagged
+exit
+classifier-profile "all" match-any
+match all
+exit
+classifier-profile "v100" match-any
+match vlan 100
+exit
+classifier-profile "v200" match-any
+match vlan 200
+exit
+classifier-profile "v300" match-any
+match vlan 300
+exit
+
+flow "1"
+classifier "all"
+policer profile "Policer1"
+vlan-tag push vlan 200 p-bit fixed 0 inner-vlan 1 p-bit fixed 0
+ingress-port ethernet 0/1
+egress-port int-ethernet 0/8 queue 0 block 0/1
+no shutdown
+exit
+flow "2"
+classifier "v200"
+policer profile "Policer1"
+vlan-tag pop vlan inner-vlan
+ingress-port int-ethernet 0/8
+egress-port ethernet 0/1 queue 0 block 0/1
+no shutdown
+exit
+
+flow "5"
+classifier "all"
+policer profile "Policer1"
+vlan-tag push vlan 1 p-bit fixed 0
+ingress-port ethernet 0/2
+egress-port int-ethernet 0/7 queue 0 block 0/1
+no shutdown
+exit
+flow "6"
+classifier "all"
+policer profile "Policer1"
+vlan-tag pop vlan
+ingress-port int-ethernet 0/7
+egress-port ethernet 0/2 queue 0 block 0/1
+no shutdown
+exit
+
+flow "3_4"
+classifier "all"
+no policer
+ingress-port ethernet 0/3
+egress-port ethernet 0/4 queue 0 block 0/1
+no shutdown
+exit
+flow "4_3"
+classifier "all"
+no policer
+ingress-port ethernet 0/4
+egress-port ethernet 0/3 queue 0 block 0/1
+no shutdown
+exit
+flow "5_6"
+classifier "all"
+no policer
+ingress-port ethernet 1/1
+egress-port ethernet 1/2 queue 0 block 0/1
+no shutdown
+exit
+flow "6_5"
+classifier "all"
+no policer
+ingress-port ethernet 1/2
+egress-port ethernet 1/1 queue 0 block 0/1
+no shutdown
+exit
+

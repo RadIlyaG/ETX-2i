@@ -1,0 +1,55 @@
+exit all
+configure
+port
+ethernet 0/2
+shutdown
+functional-mode user
+no shutdown
+exit
+exit
+flows
+classifier-profile "all" match-any
+match all
+exit
+flow "1_3"
+classifier "all"
+no policer
+ingress-port ethernet 0/1
+egress-port ethernet 0/3 queue 0 block 0/1
+no shutdown
+exit
+flow "3_1"
+classifier "all"
+no policer
+ingress-port ethernet 0/3
+egress-port ethernet 0/1 queue 0 block 0/1
+no shutdown
+exit
+flow "4_1_1"
+classifier "all"
+no policer
+ingress-port ethernet 0/4
+egress-port ethernet 1/1 queue 0 block 0/1
+no shutdown
+exit
+flow "1_1_4"
+classifier "all"
+no policer
+ingress-port ethernet 1/1
+egress-port ethernet 0/4 queue 0 block 0/1
+no shutdown
+exit
+flow "1_2_2"
+classifier "all"
+no policer
+ingress-port ethernet 1/2
+egress-port ethernet 0/2 queue 0 block 0/1
+no shutdown
+exit
+flow "2_1_2"
+classifier "all"
+no policer
+ingress-port Ethernet 0/2
+egress-port ethernet 1/2 queue 0 block 0/1
+no shutdown
+exit all
