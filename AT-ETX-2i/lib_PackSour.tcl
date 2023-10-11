@@ -50,7 +50,7 @@ if 1 {
   set d2 [file normalize  C:/download]
   
   if {$gaSet(radNet)} {
-    set emailL {{yulia_s@rad.com ronen_be@rad.com} {} {}}
+    set emailL {{yulia_s@rad.com} {} {}}
   } else {
     set emailL [list]
   }
