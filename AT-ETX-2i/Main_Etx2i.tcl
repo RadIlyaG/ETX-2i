@@ -868,19 +868,6 @@ proc Leds {run} {
   set ret [Send $gaSet(comDut) "exit all\r" "2I"]
   if {$ret!=0} {return $ret} 
   
-#   if {$gaSet(TestMode)!="AllTests"} {
-#     ## full configuration for LINKs' led
-#     set cf $gaSet($gaSet(10G)CF) 
-#     set cfTxt "$gaSet(10G)XFP"
-#     set ret [DownloadConfFile $cf $cfTxt 0]
-#     if {$ret!=0} {return $ret}
-#     
-#     ## DyingGasp for pings
-#     set cf $gaSet(dgCF)
-#     set cfTxt "Dying Gasp"
-#     set ret [DownloadConfFile $cf $cfTxt 1]
-#     if {$ret!=0} {return $ret}
-#   }
 
   ## DyingGasp for pings
   set cf C:/AT-ETX-2i/ConfFiles/Dying\ Gasp.txt
@@ -927,16 +914,7 @@ proc Leds {run} {
   }
   set ret [Loopback off]
   if {$ret!=0} {return $ret} 
-  
-#   set ret [Login]
-#   if {$ret!=0} {
-#     set ret [Login]
-#     if {$ret!=0} {return $ret}
-#   }
-#   set gaSet(fail) "Logon fail"
-#   set com $gaSet(comDut)
-#   Send $com "exit all\r" stam 0.25 
-  
+    
   if {$b!="M"} {
     foreach ps {2 1} {
       Power $ps off
@@ -982,17 +960,6 @@ proc Leds {run} {
         return -1
       }
       
-  #     RLSound::Play information
-  #     set txt "Verify on PS $ps that led is OFF"
-  #     set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
-  #     update
-  #     if {$res!="OK"} {
-  #       set gaSet(fail) "LED Test failed"
-  #       return -1
-  #     } else {
-  #       set ret 0
-  #     }
-      
       RLSound::Play information
       set txt "Assemble PS-$ps"
       set res [DialogBox -type "OK Cancel" -icon /images/info -title "LED Test" -message $txt]
@@ -1007,19 +974,6 @@ proc Leds {run} {
       after 2000
     }
   }
-  
- 
-#   RLSound::Play information
-#   set txt "Verify EXT CLK's GREEN SD led is ON"
-#   set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
-#   update
-#   if {$res!="OK"} {
-#     set gaSet(fail) "LED Test failed"
-#     return -1
-#   } else {
-#     set ret 0
-#   }
-  
   
   if {$p=="P"} {
     RLSound::Play information
@@ -1058,85 +1012,17 @@ proc Leds {run} {
     set ret 0
   }
   
-#   if {$b=="19V"} {
-#     set com $gaSet(comDut)
-#     Send $com "exit all\r" stam 1 
-#     Send $com "\r" stam 1
-#     set ret [DnfvBooting $com]
-#     puts "ret of DnfvBooting: $ret"
-#     if {$ret!=0} {
-#       set gaSet(fail) "Login to DNFV fail"
-#       return $ret
-#     }
-#   }
+  RLSound::Play information
+  set txt "Verify FAN is rotating"
+  set res [DialogBox -type "OK Fail" -icon /images/question -title "FAN Test" -message $txt]
+  update
+  if {$res!="OK"} {
+    set gaSet(fail) "FAN Test failed"
+    return -1
+  } else {
+    set ret 0
+  }
   
-#   if {$b=="19V"} {
-#     RLSound::Play information
-#     set txt "Verify that the DNFV is working"
-#     set res [DialogBox -type "OK Fail" -icon /images/question -title "Lock Knob Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "Lock Knob Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     
-#     RLSound::Play information
-#     set txt "Open the lock knob and verify that the DNFV is not working"
-#     set res [DialogBox -type "OK Fail" -icon /images/question -title "Lock Knob Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "Lock Knob Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     
-#     RLSound::Play information
-#     set txt "Extract the DNFV module out of the cage\n\
-#     Wait 5 Sec\n\
-#     Insert the DNFV module back to cage\n\
-#     Move the lock knob into lock position and secure it tightly with the lock screw"
-#     set res [DialogBox -type "OK Fail" -icon /images/question -title "Lock Knob Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "Lock Knob Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     
-#     set com $gaSet(comDut)
-#     set ret [DnfvBooting $com]
-#     if {$ret!=0} {return $ret}
-    
-#     RLSound::Play information
-#     set txt "Move the lock knob into lock position and secure it tightly with the lock screw.\n\
-#     Verify that the DNFV is working"
-#     set res [DialogBox -type "OK Fail" -icon /images/question -title "Lock Knob Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "Lock Knob Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#   }
-  
-#   set ret [TstAlm on]
-#   if {$ret!=0} {return $ret} 
-#   RLSound::Play information
-#   set txt "Verify the TST/ALM led is ON"
-#   set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
-#   update
-#   if {$res!="OK"} {
-#     set gaSet(fail) "LED Test failed"
-#     return -1
-#   } else {
-#     set ret 0
-#   }
-    
   return $ret
 }
 # ***************************************************************************
