@@ -2955,6 +2955,9 @@ proc FansTemperatureSet {} {
   if {$ret!=0} {return $ret}
   set ret [Send $com "set-point lower 20\r" thermostat]
   if {$ret!=0} {return $ret}
+  set ret [Send $com "set-point upper 30\r" thermostat]
+  if {$ret!=0} {return $ret}
+  
   
   return $ret
 }  

@@ -236,7 +236,7 @@ proc GUI {} {
   bind . <Alt-i> {GuiInventory}
   bind . <Alt-r> {ButRun}
   bind . <Alt-s> {ButStop}
-  bind . <Control-b> {set gaSet(useExistBarcode) 1}
+  bind . <Alt-b> {set gaSet(useExistBarcode) 1}
   bind . <Control-p> {ToolsPower on}
   bind . <Control-i> {GuiInventory}
   bind . <Control-o> {GuiOpts}

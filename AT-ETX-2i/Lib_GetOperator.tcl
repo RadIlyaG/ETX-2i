@@ -308,7 +308,7 @@ proc GetOpDlg {args} {
   }
   
   bind .tmpldlg <Control-i> [list InsertIGid $dlg]
-  bind .tmpldlg <Control-l> [list InsertLastId $dlg]
+  bind .tmpldlg <Alt-l> [list InsertLastId $dlg]
   set ret [$dlg draw]		
   destroy $dlg
   return $ret

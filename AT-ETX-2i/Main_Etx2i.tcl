@@ -859,9 +859,12 @@ proc Leds {run} {
   if {$p=="I7"} { 
     set ret [Loopback on]
     if {$ret!=0} {return $ret}
-    set ret [FansTemperatureSet]
-    if {$ret!=0} {return $ret}
-  }
+  }  
+  
+  ## 13:24 18/02/2024
+  set ret [FansTemperatureSet]
+  if {$ret!=0} {return $ret}
+  
   
   set ret [Login]
   if {$ret!=0} {return $ret}
