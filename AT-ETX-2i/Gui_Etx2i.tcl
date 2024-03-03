@@ -403,6 +403,8 @@ proc ButRun {} {
 #   source Lib_Put_RicEth_$gaSet(dutFam).tcl
 #   
   if {$ret==0} {
+    AddToPairLog $gaSet(pair) "$gaSet(operatorID) $gaSet(operator)"
+    
     IPRelay-Green
     Status ""
     set gaSet(curTest) [$gaGui(startFrom) cget -text]
