@@ -137,13 +137,14 @@ DeleteOldApp
 source lib_SQlite.tcl
 source LibUrl.tcl
 source Lib_GetOperator.tcl
-#console show 
-
+#console show
 if [file exists uutInits/$gaSet(DutInitName)] {
   source uutInits/$gaSet(DutInitName)
 } else {
   source [lindex [glob uutInits/ETX*.tcl] 0]
 }
+source Lib_Ramzor.tcl
+source lib_EcoCheck.tcl
 
 set gaSet(act) 1
 set gaSet(initUut) 1
