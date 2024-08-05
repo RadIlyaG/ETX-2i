@@ -689,6 +689,8 @@ proc RetriveDutFam {{dutInitName ""}} {
     set gaSet(dutFam) M.0.0.0.0
   } elseif {[string match *-DNFV-* $dutInitName]==1} {
     set gaSet(dutFam) DNFV.0.0.0.0
+  } elseif {[string match *.8.5.* $dutInitName]==1} {
+    set gaSet(dutFam) Half19.0.0.0.0
   }
   
   if {[string match *.RTR.* $dutInitName]==1} {
@@ -749,6 +751,12 @@ proc RetriveDutFam {{dutInitName ""}} {
       set gaSet(dutFam) $b.$r.$p.$d.DC
     }
   } elseif {$b=="19" || $b=="M"} {
+    if {[string match *.AC* $dutInitName]==1} {
+      set gaSet(dutFam) $b.$r.$p.$d.AC
+    } elseif {[string match *DC* $dutInitName]==1} {
+      set gaSet(dutFam) $b.$r.$p.$d.DC
+    }
+  } elseif {$b=="Half19"} {
     if {[string match *.AC* $dutInitName]==1} {
       set gaSet(dutFam) $b.$r.$p.$d.AC
     } elseif {[string match *DC* $dutInitName]==1} {

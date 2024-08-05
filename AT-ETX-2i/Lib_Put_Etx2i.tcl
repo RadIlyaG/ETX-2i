@@ -262,6 +262,8 @@ proc FansTemperatureTest {} {
     set fanState1 "off off off off"
   } elseif {$b=="M" && $p=="P"} {
     set fanState1 "on on on on"
+  } elseif {$b=="Half19" && $p=="0" && $d=="0"} {
+    set fanState1 "off off off off"
   }
   puts "b:$b r:$r p:$p d:$d sw:$sw"
   puts "fanState1:$fanState1"
@@ -301,6 +303,8 @@ proc FansTemperatureTest {} {
     set fanState2 "on on on on"
   } elseif {$b=="M" && $p=="P"} {
     set fanState2 "on on on on"
+  } elseif {$b=="Half19" && $p=="0" && $d=="0"} {
+    set fanState2 "on off off off"
   }
   puts "b:$b r:$r p:$p d:$d sw:$sw"
   puts "fanState2:$fanState2"
@@ -358,6 +362,8 @@ proc FansTemperatureTest {} {
     set fanSt "3 OK 4 OK"
   } elseif {$b=="M"} {
     set fanSt "1 OK 2 OK"
+  } elseif {$b=="Half19"} {
+    set fanSt "1 OK"
   }
   set res [regexp {FAN\s+Status[\-\s]+([\w\s]+)\s+Sensor} $buffer ma val]
   if {$res==0} {

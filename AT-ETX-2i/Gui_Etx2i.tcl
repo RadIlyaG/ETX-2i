@@ -657,7 +657,7 @@ proc GuiInventory {} {
   wm title $base "Inventory of $gaSet(DutFullName)"
   
   set indx 0
-  if {$gaSet(dutBox)=="19" || $gaSet(dutBox)=="19V" || $gaSet(dutBox)=="M"} {
+  if {$gaSet(dutBox)=="19" || $gaSet(dutBox)=="19V" || $gaSet(dutBox)=="M" || $gaSet(dutBox)=="Half19"} {
     set fr [frame $base.frSwVer -bd 0 -relief groove]
       pack [Label $fr.labSW  -text "SW Ver" -width 15] -pady 1 -padx 2 -anchor w -side left
       pack [Entry $fr.cbSW -justify center -width 45 -state disabled -editable 0 -textvariable gaTmpSet(dbrSW)] -pady 1 -padx 2 -anchor w -side left
