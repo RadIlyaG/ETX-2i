@@ -1706,6 +1706,36 @@ proc DateTime_Set {} {
 # ***************************************************************************
 proc LoadDefConf {} {
   global gaSet buffer 
+  
+  foreach {res_val res_txt} [Get_OI4Barcode $gaSet(1.barcode1)] {}
+  puts "MainEcoCheck OperationItem4Barcode res_val:<$res_val> res_txt:<$res_txt>"
+  if {$res_val=="-1"} {
+    set gaSet(fail) $res_txt
+    return -1
+  } else {
+    set dbr_asmbl $res_txt
+  }
+  set initName [regsub -all / $dbr_asmbl .]
+  
+  set localUCF [clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${initName}_$gaSet(pair).txt
+  set ret [GetUcFile $dbr_asmbl $localUCF]
+  puts "LoadDefConf ret of GetUcFile  $gaSet(1.barcode1): <$ret>"
+  if {$ret=="-1"} {
+    set gaSet(fail) "Get Default Configuration File Fail"
+    return -1
+  }
+  
+  set entDUTconfFile $::tmpLocalUCF
+  set entDUTconfFileSize [file size c:/temp/$entDUTconfFile]
+  
+  set localUCFSize [file size c:/temp/$localUCF]
+  
+  puts "\nDUT entry $entDUTconfFile:<$entDUTconfFileSize>,  LoadDefConf $localUCF:<$localUCFSize>"
+  if {$entDUTconfFileSize!=$localUCFSize} {
+    set gaSet(fail) "Problem with Default Configuration File's size ($entDUTconfFileSize != $localUCFSize)"
+    return -1
+  }
+  
   set ret [Login]
   if {$ret!=0} {
     #set ret [Login]
@@ -1715,7 +1745,7 @@ proc LoadDefConf {} {
   set com $gaSet(comDut)
   Send $com "exit all\r" stam 0.25 
   
-  set cf $gaSet(defConfCF) 
+  set cf c:/temp/$localUCF ; #set cf $gaSet(defConfCF) 
   set cfTxt "DefaultConfiguration"
   set ret [DownloadConfFile $cf $cfTxt 1]
   if {$ret!=0} {return $ret}

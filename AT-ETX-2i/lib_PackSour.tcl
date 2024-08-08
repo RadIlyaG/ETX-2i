@@ -38,6 +38,16 @@ if 1 {
       file copy -force //prod-svm1/tds/install/ateinstall/jate_team/autoupdate/rlautoupdate.tcl c:/tcl/lib/rl
       after 2000
     }
+    if 1 {
+      set mTimeTds [file mtime //prod-svm1/tds/install/ateinstall/jate_team/LibUrl_WS/LibUrl.tcl]
+      set mTimePwd  [file mtime [pwd]/LibUrl.tcl]
+      puts "mTimeTds:$mTimeTds mTimePwd:$mTimePwd"
+      if {$mTimeTds>$mTimePwd} {
+        puts "$mTimeTds>$mTimePwd"
+        file copy -force //prod-svm1/tds/install/ateinstall/jate_team/LibUrl_WS/LibUrl.tcl ./
+        after 2000
+      }
+    }
     update
   }
   

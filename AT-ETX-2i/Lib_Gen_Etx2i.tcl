@@ -575,33 +575,49 @@ proc GetDbrName {} {
   Status "Please wait for retriving DBR's parameters"
   after 500
   
-  catch {exec $gaSet(javaLocation)/java -jar $::RadAppsPath/OI4Barcode.jar $barcode} b
-  set fileName MarkNam_$barcode.txt
-  after 1000
-  if ![file exists MarkNam_$barcode.txt] {
-    set gaSet(fail) "File $fileName is not created. Verify the Barcode"
-    #exec C:\\RLFiles\\Tools\\Btl\\failbeep.exe &
+  # catch {exec $gaSet(javaLocation)/java -jar $::RadAppsPath/OI4Barcode.jar $barcode} b
+  # set fileName MarkNam_$barcode.txt
+  # after 1000
+  # if ![file exists MarkNam_$barcode.txt] {
+    # set gaSet(fail) "File $fileName is not created. Verify the Barcode"
+    # #exec C:\\RLFiles\\Tools\\Btl\\failbeep.exe &
+    # RLSound::Play fail
+	  # Status "Test FAIL"  red
+    # DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error
+    # pack $gaGui(frFailStatus)  -anchor w
+	  # $gaSet(runTime) configure -text ""
+  	# return -1
+  # }
+  
+  # set fileId [open "$fileName"]
+    # seek $fileId 0
+    # set res [read $fileId]    
+  # close $fileId
+  
+  
+  foreach {ret resTxt} [Get_OI4Barcode $barcode] {}
+  if {$ret=="0"} {
+    #  set dbrName [dict get $ret "item"]
+    set dbrName $resTxt
+  } else {
+    set gaSet(fail) $resTxt
     RLSound::Play fail
 	  Status "Test FAIL"  red
-    DialogBox -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error
+    DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error
     pack $gaGui(frFailStatus)  -anchor w
 	  $gaSet(runTime) configure -text ""
   	return -1
   }
   
-  set fileId [open "$fileName"]
-    seek $fileId 0
-    set res [read $fileId]    
-  close $fileId
-  
   #set txt "$barcode $res"
-  set txt "[string trim $res]"
+  set txt "[string trim $dbrName]"
   #set gaSet(entDUT) $txt
   set gaSet(entDUT) ""
-  puts <$txt>
+  puts "GetDbrName <$txt>"
   
-  set initName [regsub -all / $res .]
-  set gaSet(DutFullName) $res
+  puts "GetDbrName dbrName:<$dbrName>"
+  puts "GetDbrName initName:<$initName>"
+  set gaSet(DutFullName) $dbrName
   set gaSet(DutInitName) $initName.tcl
   
   file delete -force MarkNam_$barcode.txt
@@ -622,8 +638,51 @@ proc GetDbrName {} {
   } 
   wm title . "$gaSet(pair) : $gaSet(DutFullName)"
   pack forget $gaGui(frFailStatus)
-  Status ""
+  Status ""  
   update
+  
+  set ::tmpLocalUCF [clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${gaSet(DutInitName)}_$gaSet(pair).txt
+  set ret [GetUcFile $gaSet(DutFullName) $::tmpLocalUCF]
+  puts "BuildTests ret of GetUcFile  $gaSet(DutFullName) $gaSet(DutInitName): <$ret>"
+  if {$ret=="-1"} {
+    set gaSet(fail) "Get Default Configuration File Fail"
+    RLSound::Play fail
+    Status "Test FAIL"  red
+    DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get Default Configuration File Problem"
+    pack $gaGui(frFailStatus)  -anchor w
+    $gaSet(runTime) configure -text ""
+    #return -1
+  }	else {
+    if {$gaSet(DefaultCF)!="" && $gaSet(DefaultCF)!="c:/aa"} {
+      if {$ret=="0"} {
+        set gaSet(fail) "No Default Configuration File at Agile, but exists in init "
+        Status "Test FAIL"  red
+        DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get Default Configuration File Problem"
+        pack $gaGui(frFailStatus)  -anchor w
+        $gaSet(runTime) configure -text ""
+        set ret -1
+      }
+    } elseif {$gaSet(DefaultCF)=="" || $gaSet(DefaultCF)=="c:/aa"} {  
+      if {$ret!="0"} {
+        set gaSet(fail) "No Default Configuration File at init, but exists at Agile"
+        Status "Test FAIL"  red
+        DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get Default Configuration File Problem"
+        pack $gaGui(frFailStatus)  -anchor w
+        $gaSet(runTime) configure -text ""
+        set ret -1
+      }  
+    }
+  }
+  if {$ret=="-1"} {
+    $gaGui(startFrom) configure -text "" -values [list]
+    set glTests [list]
+    set gaSet(curTest) ""
+    set gaSet(log.$gaSet(pair)) c:/logs/[clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"].txt
+    AddToPairLog $gaSet(pair) $gaSet(fail)
+    Status "Test FAIL"  red
+    return -2
+  }
+  
   BuildTests
   
   set ret [GetDbrSW $barcode]
@@ -1075,23 +1134,29 @@ proc Ping {dutIp} {
 # ***************************************************************************
 proc GetMac {fi} {
   puts "[MyTime] GetMac $fi" ; update
-  set macFile c:/tmp/mac[set fi].txt
-  exec $::RadAppsPath/MACServer.exe 0 1 $macFile 1
-  set ret [catch {open $macFile r} id]
+  # set macFile c:/tmp/mac[set fi].txt
+  # exec $::RadAppsPath/MACServer.exe 0 1 $macFile 1
+  # set ret [catch {open $macFile r} id]
+  # if {$ret!=0} {
+    # set gaSet(fail) "Open Mac File fail"
+    # return -1
+  # }
+  # set buffer [read $id]
+  # close $id
+  # file delete $macFile
+  # set ret [regexp -all {ERROR} $buffer]
+  # if {$ret!=0} {
+    # set gaSet(fail) "MACServer ERROR"
+    # exec beep.exe
+    # return -1
+  # }
+  # return [lindex $buffer 0]
+  foreach {ret resTxt} [Get_Mac 1] {}
   if {$ret!=0} {
-    set gaSet(fail) "Open Mac File fail"
-    return -1
+    set gaSet(fail) $resTxt
+    return $ret
   }
-  set buffer [read $id]
-  close $id
-  file delete $macFile
-  set ret [regexp -all {ERROR} $buffer]
-  if {$ret!=0} {
-    set gaSet(fail) "MACServer ERROR"
-    exec beep.exe
-    return -1
-  }
-  return [lindex $buffer 0]
+  return $resTxt
 }
 # ***************************************************************************
 # SplitString2Paires
@@ -1121,7 +1186,8 @@ proc GetDbrSW {barcode} {
 #     set gaSet(fail) "Java application is missing"
 #     return -1
 #   }  
-  catch {exec $gaSet(javaLocation)/java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
+  #catch {exec $gaSet(javaLocation)/java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
+  foreach {res b} [Get_SwVersions $barcode] {}
   puts "GetDbrSW b:<$b>" ; update
   after 1000
   set swIndx [lsearch $b $gaSet(swPack)]  
@@ -1157,8 +1223,8 @@ proc GetDbrSW {barcode} {
   
   pack forget $gaGui(frFailStatus)
   
-  set swTxt [glob SW*_$barcode.txt]
-  catch {file delete -force $swTxt}
+  # set swTxt [glob SW*_$barcode.txt]
+  # catch {file delete -force $swTxt}
   
   Status "Ready"
   update

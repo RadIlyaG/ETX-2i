@@ -75,54 +75,69 @@ proc GetPageFile {barcode} {
   ## c:\RADapps/Get28e01Data.exe  2;DC1001403648;1
   #exec c:/RADapps/Get28e01Data.exe  $gaSet(IdTyp)\;$barcode\;$gaSet(FileVer)
   
-  ## 19/01/2020 08:32:53
-  exec $::RadAppsPath/Get28e01Data.exe  $gaSet(IdTyp)\;$barcode\;$gaSet(FileVer)\;
-  set fileName "$barcode.txt" 
-  Status "Wait for Pages 0-3 retrieval ..." ; update
+  
+  # exec $::RadAppsPath/Get28e01Data.exe  $gaSet(IdTyp)\;$barcode\;$gaSet(FileVer)\;
+  # set fileName "$barcode.txt" 
+  # Status "Wait for Pages 0-3 retrieval ..." ; update
 
-	if {[file exists "$fileName"]==0} {
-	  set gaSet(fail) "Page file retrieval fail." ; update
-    puts stderr "Page file retrieval fail." 
+	# if {[file exists "$fileName"]==0} {
+	  # set gaSet(fail) "Page file retrieval fail." ; update
+    # puts stderr "Page file retrieval fail." 
+    # return -1
+	# }  
+  
+  # set fileId [open "$fileName"]
+  # seek $fileId 0
+  # set res [read $fileId]    
+  # close $fileId
+  
+  # ##file delete -force $fileName 
+  
+  set trac ""
+  foreach {ret resTxt} [Get_Pages $barcode $trac 1 ] {}
+  if {$ret!=0} {
+    set gaSet(fail) $resTxt
+    puts stderr $resTxt 
     return -1
-	}  
-  
-  set fileId [open "$fileName"]
-  seek $fileId 0
-  set res [read $fileId]    
-  close $fileId
-  
-  ##file delete -force $fileName 
-  
+  }
 
   #Page0
-  set ret [regexp {Page 0 - ([\w ]+)} $res var gaGet(page0)]  
+  set ret [regexp {Page 0 - ([\w ]+)} $resTxt var gaGet(page0)]  
   if {$ret!=1} {
-  	set gaSet(fail) "Page0 retrieval fail." ; update
-    puts stderr "Page0 retrieval fail." 
+  	set res [regsub -all \[\-\!\r\n\]+ $resTxt ""]
+    set txt "Get Page0 fail - $res"
+  	set gaSet(fail) $txt ; update
+    puts stderr $txt 
     return -1
   }
   set gaGet(page0) [string trim $gaGet(page0)]
   #Page1
-  set ret [regexp {Page 1 - ([\w ]+)} $res var gaGet(page1)]  
+  set ret [regexp {Page 1 - ([\w ]+)} $resTxt var gaGet(page1)]  
   if {$ret!=1} {
-  	set gaSet(fail) "Page1 retrieval fail." ; update
-    puts stderr "Page1 retrieval fail." 
+  	set res [regsub -all \[\-\!\r\n\]+ $resTxt ""]
+    set txt "Get Page1 fail - $res"
+  	set gaSet(fail) $txt ; update
+    puts stderr $txt 
     return -1
   }
   set gaGet(page1) [string trim $gaGet(page1)]  
   #Page2
-  set ret [regexp {Page 2 - ([\w ]+)} $res var gaGet(page2)]  
+  set ret [regexp {Page 2 - ([\w ]+)} $resTxt var gaGet(page2)]  
   if {$ret!=1} {
-  	set gaSet(fail) "Page2 retrieval fail." ; update
-    puts stderr "Page2 retrieval fail." 
+  	set res [regsub -all \[\-\!\r\n\]+ $resTxt ""]
+    set txt "Get Page2 fail - $res"
+  	set gaSet(fail) $txt ; update
+    puts stderr $txt 
     return -1
   }
   set gaGet(page2) [string trim $gaGet(page2)]  
   #Page3
-  set ret [regexp {Page 3 - ([\w ]+)} $res var gaGet(page3)]  
+  set ret [regexp {Page 3 - ([\w ]+)} $resTxt var gaGet(page3)]  
   if {$ret!=1} {
-  	set gaSet(fail) "Page3 retrieval fail." ; update
-    puts stderr "Page3 retrieval fail." 
+  	set res [regsub -all \[\-\!\r\n\]+ $resTxt ""]
+    set txt "Get Page3 fail - $res"
+  	set gaSet(fail) $txt ; update
+    puts stderr $txt 
     return -1
   }  
   set gaGet(page3) [string trim $gaGet(page3)]
