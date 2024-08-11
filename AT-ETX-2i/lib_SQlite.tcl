@@ -80,17 +80,16 @@ proc SQliteAddLine {} {
     set traceID $resTxt
   }
   if {$traceID!=""} {
-    foreach {ret resTxt} [Get_PcbTraceIdData $traceID {"po number"}] {}
+    foreach {ret resTxt} [Get_PcbTraceIdData $traceID  {"po number"}] {}
     if {$ret!="0"} {
-        set poNumber ""
-      } else {
-        set poNumber [lindex $resTxt 1]
-      }
+      set poNumber ""
+    } else {
+      set poNumber [lindex $resTxt 1]
     }  
   }
 
   for {set tr 1} {$tr <= 6} {incr tr} {
-    #if [catch {UpdateDB $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator} res] {
+    #if [catch {UpdateDB $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator} res] {}
     if [catch {UpdateDB2 $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator $traceID $poNumber "" "" ""} res] {
 
       set res "Try${tr}_fail.$res"
