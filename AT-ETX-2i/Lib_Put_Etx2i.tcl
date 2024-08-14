@@ -1717,9 +1717,11 @@ proc LoadDefConf {} {
   }
   set initName [regsub -all / $dbr_asmbl .]
   
-  set localUCF [clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${initName}_$gaSet(pair).txt
-  set ret [GetUcFile $dbr_asmbl $localUCF]
-  puts "LoadDefConf ret of GetUcFile  $gaSet(1.barcode1): <$ret>"
+  set localUCF c:/temp/[clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${initName}_$gaSet(pair).txt
+  set ret [Get_ConfigurationFile $dbr_asmbl $localUCF]
+  puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF : <$ret>"
+  foreach {ret size} [Get_ConfigurationFile $dbr_asmbl $localUCF] {}
+  puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF ret:<$ret> size:<$size>"
   if {$ret=="-1"} {
     set gaSet(fail) "Get Default Configuration File Fail"
     return -1
@@ -1752,7 +1754,7 @@ proc LoadDefConf {} {
   
   set ret [Send $com "file copy running-config user-default-config\r" "yes/no" ]
   if {$ret!=0} {return $ret}
-  set ret [Send $com "y\r" "successfull" 30]
+  set ret [Send $com "y\r" "successfull" 100]
   
   return $ret
 }
@@ -3270,7 +3272,7 @@ proc DeleteBootFiles {} {
   if {$ret8!=0} {
     set res [Send $com "delete startup-config\12" "deleted successfully" 20]
     if {$res!=0} {
-      set gaSet(fail) "Use-str-config delete fail
+      set gaSet(fail) "Use-str-config delete fail"
       return -1      
     } 
     puts "startup-config Delete" ; update      
@@ -4319,3 +4321,62 @@ proc ReadEthPortOpStatus {port} {
   retutn -2
 }  
 
+# ***************************************************************************
+# SaveRunningConf
+# ***************************************************************************
+proc SaveRunningConf {} {
+  global gaSet buffer
+  set com $gaSet(comDut)
+  Status "Save Running Configuration"
+  set ret [Login]
+  if {$ret!=0} {
+    #set ret [Login]
+    if {$ret!=0} {return $ret}
+  }
+  
+  Send $com "exit all\r" stam 1 
+  
+  set ret [Send $com "admin save\r" "successfull" 120]
+  if {$ret!=0} {set gaSet(fail) "Admin Save fail"; return $ret}
+  
+  # set ret [Send $com "file copy running-config user-default-config\r" "yes/no" ]
+  # if {$ret!=0} {set gaSet(fail) "Copy Running to UserDefault fail"; return $ret}
+  # set ret [Send $com "y\r" "successfull" 100]
+  return $ret 
+}   
+# ***************************************************************************
+# CheckUserDefaultFilePerf
+# ***************************************************************************
+proc CheckUserDefaultFilePerf {} {
+  global gaSet buffer
+  set com $gaSet(comDut)
+  Status "Check User Default File"
+  set ret [Login]
+  if {$ret!=0} {
+    #set ret [Login]
+    if {$ret!=0} {return $ret}
+  }
+  
+  Send $com "exit all\r" stam 0.25 
+  set ret [Send $com "file dir\r" more 5]
+  if {$ret == 0} {
+    set buff $buffer
+    Send $com "\r" more 5
+    append buff $buffer
+    Send $com "\r" $gaSet(prompt)
+    append buff $buffer
+    set buffer $buff
+  }
+  puts "\n CheckUserDefaultFilePerf buffer:<$buffer>"
+  if [string match {*user-default-config*} $buffer] {
+    set ret 0
+    set res [regexp {user-default-config[\sa-zA-Z]+(\d+)\s} $buffer ma val]
+    if $res {
+      AddToPairLog $gaSet(pair) "user-default-config: $val"
+    }
+  } else {
+    set ret -1
+    set gaSet(fail) "No \'user-default-config\' in File Dir"
+  }
+  return $ret
+}

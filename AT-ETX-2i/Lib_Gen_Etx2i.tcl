@@ -36,7 +36,7 @@ proc OpenRL {} {
   set gaSet(curTest) $curTest
   puts "[MyTime] ret:$ret ret1:$ret1 ret2:$ret2 " ; update
   if {$ret1!=0 || $ret2!=0} {
-    return -1
+    return -2
   }
   return 0
 }
@@ -161,7 +161,7 @@ proc SaveUutInit {fil} {
   if [info exists gaSet(DutInitName)] {
     puts $id "set gaSet(DutInitName) \"$gaSet(DutInitName)\""
   }
-  foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR DNFV} {
+  foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR DNFV Default} {
     if ![info exists gaSet([set indx]CF)] {
       set gaSet([set indx]CF) ??
     }
@@ -614,6 +614,7 @@ proc GetDbrName {} {
   #set gaSet(entDUT) $txt
   set gaSet(entDUT) ""
   puts "GetDbrName <$txt>"
+  set initName [regsub -all / $dbrName .]
   
   puts "GetDbrName dbrName:<$dbrName>"
   puts "GetDbrName initName:<$initName>"
@@ -625,6 +626,11 @@ proc GetDbrName {} {
   
   if {[file exists uutInits/$gaSet(DutInitName)]} {
     source uutInits/$gaSet(DutInitName)  
+    if {$gaSet(DefaultCF)=="" || $gaSet(DefaultCF)=="c:/aa"} {  
+      set ::chbUcf 0 ; ## for GuiInventory
+    } else {
+      set ::chbUcf 1
+    }
     UpdateAppsHelpText  
   } else {
     ## if the init file doesn't exist, fill the parameters by ? signs
@@ -641,9 +647,9 @@ proc GetDbrName {} {
   Status ""  
   update
   
-  set ::tmpLocalUCF [clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${gaSet(DutInitName)}_$gaSet(pair).txt
-  set ret [GetUcFile $gaSet(DutFullName) $::tmpLocalUCF]
-  puts "BuildTests ret of GetUcFile  $gaSet(DutFullName) $gaSet(DutInitName): <$ret>"
+  set ::tmpLocalUCF c:/temp/[clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${gaSet(DutInitName)}_$gaSet(pair).txt
+  foreach {ret size} [Get_ConfigurationFile $gaSet(DutFullName) $::tmpLocalUCF] {}
+  puts "GetDbrName ret of Get_ConfigurationFile  $gaSet(DutFullName) $::tmpLocalUCF ret:<$ret> size:<$size>"
   if {$ret=="-1"} {
     set gaSet(fail) "Get Default Configuration File Fail"
     RLSound::Play fail
@@ -654,7 +660,7 @@ proc GetDbrName {} {
     #return -1
   }	else {
     if {$gaSet(DefaultCF)!="" && $gaSet(DefaultCF)!="c:/aa"} {
-      if {$ret=="0"} {
+      if {$size=="0"} {
         set gaSet(fail) "No Default Configuration File at Agile, but exists in init "
         Status "Test FAIL"  red
         DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get Default Configuration File Problem"
@@ -663,7 +669,7 @@ proc GetDbrName {} {
         set ret -1
       }
     } elseif {$gaSet(DefaultCF)=="" || $gaSet(DefaultCF)=="c:/aa"} {  
-      if {$ret!="0"} {
+      if {$size!="0"} {
         set gaSet(fail) "No Default Configuration File at init, but exists at Agile"
         Status "Test FAIL"  red
         DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get Default Configuration File Problem"

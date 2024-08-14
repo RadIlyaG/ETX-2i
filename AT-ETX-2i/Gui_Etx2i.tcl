@@ -643,7 +643,7 @@ proc GuiInventory {} {
     if ![info exists gaSet($par)] {set gaSet($par) ??}
     set gaTmpSet($par) $gaSet($par)
   }
-  foreach indx {19V 19 M DGasp ExtClk RTR DNFV Boot SW} { 
+  foreach indx {19V 19 M DGasp ExtClk RTR DNFV Boot SW Default} { 
     if ![info exists gaSet([set indx]CF)] {set gaSet([set indx]CF) c:/aa}
     set gaTmpSet([set indx]CF)  $gaSet([set indx]CF)
   }
@@ -714,6 +714,10 @@ proc GuiInventory {} {
         pack $fr  -fill x -pady 3
       }
     } 
+    set fr  [frame $base.frUcf -bd 2 -relief groove]
+      set gaGui(chbUcf) [ttk::checkbutton $fr.chbUcf -text "User Default Configuration File" -variable ::chbUcf -command {ToggleUCF}]
+      pack $gaGui(chbUcf)  -pady 1 -padx 3 -anchor w 
+    pack $fr -fill x -pady 3
   } elseif {$gaSet(dutBox)=="DNFV"} {
     foreach indx {DNFV} {      
       set fr [frame $base.fr$indx -bd 0 -relief groove]
@@ -1305,3 +1309,15 @@ proc GuiReadOperator {} {
   }
 
 }   
+# ***************************************************************************
+# ToggleUCF
+# ***************************************************************************
+proc ToggleUCF {} {
+  global gaTmpSet
+  puts "ToggleUCF ::chbUcf:<$::chbUcf>"
+  if {$::chbUcf && ($gaTmpSet(DefaultCF)=="" || $gaTmpSet(DefaultCF)=="c:/aa")} {  
+    set gaTmpSet(DefaultCF) "UserDefConf_exists"
+  } else {
+    set gaTmpSet(DefaultCF) ""
+  }
+}

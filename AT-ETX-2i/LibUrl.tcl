@@ -3,8 +3,10 @@ package require tls
 package require base64
 package require json
 ::http::register https 8445 ::tls::socket
+package require md5
 
-set ::debugWS 1
+set ::debugWS 0
+set ::MRserverURL http://ws-proxy01.rad.com:10211/MacRegREST/MacRegExt/ws
 
 # console show
 proc UpdateDB {barcode uutName hostDescription  date time status  failTestsList failDescription dealtByServer} {
@@ -104,7 +106,7 @@ proc ConvertToUrl {s} {
 }
 
 # ***************************************************************************
-# Get_SwVersions
+# Get_SwVersions  (SWVersions4IDnumber.jar)
 #  Get_SwVersions DE1005790454 ; # no SW
 #  Get_SwVersions DC1002287083 
 #  Returns list of two values - result and resultText
@@ -117,7 +119,7 @@ proc ConvertToUrl {s} {
 #      0 {}
 # ***************************************************************************
 proc Get_SwVersions {id} {
-  puts "\nGet_SwVersions $id"
+  if $::debugWS {puts "\nGet_SwVersions $id"}
   set barc [format %.11s $id]
   set url "http://ws-proxy01.rad.com:8081/ExtAppsWS/Proxy/Select"
   set query [::http::formatQuery queryName "qry.get.sw.for_idNumber_2" db inventory params $barc]
@@ -134,7 +136,7 @@ proc Get_SwVersions {id} {
 }
 
 # ***************************************************************************
-# Get_OI4Barcode
+# Get_OI4Barcode (OI4Barcode.jar)
 #  Get_OI4Barcode EA1004489579
 #  Returns list of two values - result and resultText
 #   result may be -1 if WS fails,
@@ -143,7 +145,7 @@ proc Get_SwVersions {id} {
 #       0 RIC-LC/8E1/UTP/ACDC
 # ***************************************************************************
 proc Get_OI4Barcode {id} {
-  puts "\nGet_OI4Barcode $id"
+  if $::debugWS {puts "\nGet_OI4Barcode $id"}
   set barc [format %.11s $id]
   
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
@@ -170,7 +172,7 @@ proc Get_OI4Barcode {id} {
 #       0 A 
 # ***************************************************************************
 proc Get_CSL {id} {
-  puts "\Get_CSL $id"
+  if $::debugWS {puts "\Get_CSL $id"}
   set barc [format %.11s $id]
   
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
@@ -197,7 +199,7 @@ proc Get_CSL {id} {
 #       0 RIC-LC/8E1/4UTP/ETR/RAD   
 # ***************************************************************************
 proc Get_MrktName {id} {
-  puts "\nGet_MrktName $id"
+  if $::debugWS {puts "\nGet_MrktName $id"}
   set barc [format %.11s $id]
   
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
@@ -223,7 +225,7 @@ proc Get_MrktName {id} {
 #                  0 if there is Marketing Number (located at resultText)
 # ***************************************************************************
 proc Get_MrktNumber {dbr_assm} {
-  puts "\nGet_MrktNumber $dbr_assm"
+  if $::debugWS {puts "\nGet_MrktNumber $dbr_assm"}
   
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
   set param MKTPDNByDBRAssembly\?dbrAssembly=$dbr_assm
@@ -240,14 +242,14 @@ proc Get_MrktNumber {dbr_assm} {
   return [list $res $value] 
 } 
 # ***************************************************************************
-# Disconnect_Barcode
+# Disconnect_Barcode  (DisconnectBarcode.jar)
 #  Disconnect_Barcode EA1004489579
 #  Returns list of two values - result and resultText
 #   result may be -1 if WS fails,
 #                  0 
 # ***************************************************************************
 proc Disconnect_Barcode {id {mac ""}} {
-  puts "\nDisconnect_Barcode $id $mac"
+  if $::debugWS {puts "\nDisconnect_Barcode $id $mac"}
   set barc [format %.11s $id]
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
   set param DisconnectBarcode\?mac=[set mac]&idNumber=[set barc]
@@ -270,7 +272,7 @@ proc Disconnect_Barcode {id {mac ""}} {
 #       0 {pcb SF-1V/PS.REV0.3I product SF1P/PS12V/RG/PS3/TERNA/3PIN/R06}   
 # ***************************************************************************
 proc Get_PcbTraceIdData {id var_list} {
-  puts "\nGet_PcbTraceIdData $id"
+  if $::debugWS {puts "\nGet_PcbTraceIdData $id"}
   
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/"
   set param PCBTraceabilityIDData\?barcode=null\&traceabilityID=$id
@@ -296,7 +298,7 @@ proc Get_PcbTraceIdData {id var_list} {
 
 
 # ***************************************************************************
-# CheckMac
+# CheckMac  (CheckMAC.jar)
 # CheckMac EA1004489579 112233445566
 # CheckMac DE100579045 123456123456
 # Returns list of two values - result and resultText
@@ -316,8 +318,8 @@ proc CheckMac {id mac} {
   if {$res!=0} {
     return $connected_mac
   }
-  puts "CheckMac input_id:<$short_id>, to $mac connected id: <$connected_id>"
-  puts "CheckMac input_mac:<$mac>, to $short_id connected mac: <$connected_mac>"
+  if $::debugWS {puts "CheckMac input_id:<$short_id>, to $mac connected id: <$connected_id>"}
+  if $::debugWS {puts "CheckMac input_mac:<$mac>, to $short_id connected mac: <$connected_mac>"}
   
   if {$connected_id == $short_id && $connected_mac == $mac} {
     return [list 0 "$id->$mac"]
@@ -365,9 +367,10 @@ proc chk_connection_to_id {{id "EA100448957"}} {
 # Retrive_WS
 # ***************************************************************************
 proc Retrive_WS {url {query "NA"} paramName} {
-  puts "Retrive_WS \"$url\" \"$query\" \"$paramName\""
+  if $::debugWS {puts "\nRetrive_WS \"$url\" \"$query\" \"$paramName\""}
   set res_val 0
   set res_txt [list]
+  set ::asadict ""
   set headers [list Authorization "Basic [base64::encode webservices:radexternal]"]
   set cmd {::http::geturl $url -headers $headers}
   if {[string range $query 0 3]=="file"} {
@@ -430,7 +433,8 @@ proc Retrive_WS {url {query "NA"} paramName} {
     }
     
     set asadict [::json::json2dict $body]
-    if [string match {*qry.get.sw.for_idNumber_2*} $url] {
+    set ::asadict $asadict
+    if {[string match {*qry.get.sw.for_idNumber_2*} $url]} {
       foreach par $asadict {
         foreach {swF swV verF verV} $par {
           lappend res_txt $swV $verV
@@ -463,7 +467,7 @@ proc Retrive_WS {url {query "NA"} paramName} {
 #      0 42207
 # ***************************************************************************
 proc Get_ConfigurationFile {dbr_assm localUCF} {
-  puts "\nGet_ConfigurationFile $dbr_assm $localUCF"
+  if $::debugWS {puts "\nGet_ConfigurationFile $dbr_assm $localUCF"}
   
   if [file exists $localUCF] {
     catch {file delete -force $localUCF}
@@ -488,7 +492,7 @@ proc Get_ConfigurationFile {dbr_assm localUCF} {
 #      0 21377
 # ***************************************************************************
 proc Get_File {path file_name local_file} {
-  puts "\nGet_File $path $file_name $local_file"
+  if $::debugWS {puts "\nGet_File $path $file_name $local_file"}
   
   # if [file exists $localUCF] {
     # catch {file delete -force $localUCF}
@@ -503,7 +507,7 @@ proc Get_File {path file_name local_file} {
 }
 
 # ***************************************************************************
-# Get_Mac
+# Get_Mac  (MACServer.exe)
 #  Get_Mac 0
 #  Returns list of two values - result and resultText
 #   result may be -1 if WS fails,
@@ -512,8 +516,11 @@ proc Get_File {path file_name local_file} {
 #   Get_Mac 1 will return
 #     0 1806F5879CB6
 # ***************************************************************************
+proc MacServer {qty} {
+  return [Get_Mac $qty]
+}
 proc Get_Mac {qty} {
-  puts "\nGet_Mac $qty"
+  if $::debugWS {puts "\nGet_Mac $qty"}
   set url "https://ws-proxy01.rad.com:8445/MacRegREST/MacRegExt/ws/sp001_mac_address_alloc"
   set query [::http::formatQuery p_mode 0 p_trace_id 0 p_serial 0 p_idnumber_id 0 p_alloc_qty $qty p_file_version 1]
   set resLst [Retrive_WS $url $query "Get $qty MACs"]
@@ -528,11 +535,14 @@ proc Get_Mac {qty} {
 }
 
 # ***************************************************************************
-# Get_Pages
+# Get_Pages (Get28e01Data.exe)
 # Get_Pages IO3001960310 50190576 0 
 # ***************************************************************************
+proc Get28e01Data  {id {traceId ""} {macs_qty 10} } {
+  return [Get_Pages $id $traceId $macs_qty]
+}
 proc Get_Pages {id {traceId ""} {macs_qty 10} } {
-  puts "\nGet_Pages $id $traceId $macs_qty"
+  if $::debugWS {puts "\nGet_Pages $id $traceId $macs_qty"}
   
   set headers [list "content-type" "text/xml" "SOAPAction" ""]
   set data "<soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
@@ -609,7 +619,7 @@ proc Get_Pages {id {traceId ""} {macs_qty 10} } {
 # ***************************************************************************
 proc Ping_WebServices03 {} {
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/rest/Ping"
-  puts "Ping_WebServices03 $url"
+  if $::debugWS {puts "Ping_WebServices03 $url"}
   set headers [list Authorization "Basic [base64::encode webservices:radexternal]"]
   set cmd {::http::geturl $url -headers $headers}
   
@@ -645,7 +655,7 @@ proc Ping_WebServices03 {} {
 # Ping_Pages
 # ***************************************************************************
 proc Ping_Pages {}  {
-  puts "\nPing_Pages"
+  if $::debugWS {puts "\nPing_Pages"}
   
   set headers [list "content-type" "text/xml" "SOAPAction" ""]
   set data "<soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
@@ -692,7 +702,7 @@ proc Ping_Pages {}  {
 #       0 21146247C
 # ***************************************************************************
 proc Get_TraceId {id} {
-  puts "\nGet_TraceId $id"
+  if $::debugWS {puts "\nGet_TraceId $id"}
   set barc [format %.11s $id]
   
   set url "https://ws-proxy01.rad.com:8445/ATE_WS/ws/traceability/"
@@ -711,10 +721,487 @@ proc Get_TraceId {id} {
 } 
 
 
+
+# ***************************************************************************
+# MacReg (MACReg_2MAC_2IMEI.exe)
+# 
+# MacReg 123456123456 EA1004489579 ;  # will return 0 {}
+# MacReg 123456123456 EA1004489579 -imei2 123456789012345  ; # return: -1 {IMEI 123456789012345 isn't Valid}
+# MacReg 123456123456 EA1004489579 -imei1 862940033957501  ; # return: 0 {}
+# MacReg 123456123456 EA1004489579 -sp1 Enable -imei1 862940033957501
+# MacReg 123456123456 EA1004489579 -imei1 862940033962501
+# ***************************************************************************
+proc MacReg {mac1 id args} {
+  if $::debugWS {puts "\nMacReg $mac1 $id $args"}
+  foreach nam [list mac2 imei1 imei2] {
+    set $nam ""
+  }
+  foreach nam [list sp1 sp2 sp3 sp4 sp5 sp6 sp7 sp8] {
+    set $nam "DISABLE"
+  }
+  foreach {nam val} $args {
+    set nam [string tolower [string trim $nam]] ; # -IMEI1 -> -imei1
+    set val [string toupper [string trim $val]] ; # Enable - > ENABLE
+    switch -exact -- $nam {
+      -mac2   {set mac2 $val}
+      -imei1  {set imei1 $val}
+      -imei2  {set imei2 $val}
+      -sp1    {set sp1 $val}
+      -sp2    {set sp2 $val}
+      -sp3    {set sp3 $val}
+      -sp4    {set sp4 $val}
+      -sp5    {set sp5 $val}
+      -sp6    {set sp6 $val}
+      -sp7    {set sp7 $val}
+      -sp8    {set sp8 $val}
+      default {return [list "-1" "Wrong parameter $nam"]}
+    }
+  }
+  
+  set id [string toupper [string trim $id]]      ; # ea1004489579 -> EA1004489579
+  set mac1 [string toupper [string trim $mac1]]  ; # abcd1234ef00 -> ABCD1234EF00
+  
+  foreach {ret resTxt} [checkIdNumber $id] {}
+  if $::debugWS {puts " MacReg after checkIdNumber ret:<$ret> resTxt:<$resTxt>"}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  set id [format %.11s $id]
+  
+  foreach {ret resTxt} [checkIdNumberIsValid $id] {}
+  if $::debugWS {puts " MacReg after checkIdNumberIsValid ret:<$ret> resTxt:<$resTxt>"}
+  if {$ret!=0} {return [list $ret $resTxt]}  
+  
+  if {$imei1 != ""} {
+    foreach {ret resTxt} [checkIMEIisValid $imei1] {}
+    if $::debugWS {puts " MacReg after checkIMEIisValid ret:<$ret> resTxt:<$resTxt>"}
+    if {$ret!=0} {return [list $ret $resTxt]}
+  }
+  if {$imei2 != ""} {
+    foreach {ret resTxt} [checkIMEIisValid $imei2] {}
+    if $::debugWS {puts " MacReg after checkIMEIisValid2 ret:<$ret> resTxt:<$resTxt>"}
+    if {$ret!=0} {return [list $ret $resTxt]}
+  }  
+  
+  ## check if there is/are connected MAC/s IMEI/s  and is/are not equal to provided
+  ## if no connected, or connected is/are as provided, then ret:<0> resTxt:<>
+  ## if connected is not equal to provided and password was not provided then ret:<-1> resTxt:<No password>
+  ## if connected is not equal to provided and password was provided then ret:<0> resTxt:<>
+  foreach {ret resTxt} [overwriteAllMacAndIMEI $id $imei1 $imei2 $mac1 $mac2] {}
+  if $::debugWS {puts " MacReg after overAll ret:<$ret> resTxt:<$resTxt>"}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  
+  if {$imei1 != ""} {
+    foreach {ret resTxt} [overwriteCurrentIMEI $imei1 $id] {}
+    if $::debugWS {puts " MacReg after overImei1 ret:<$ret> resTxt:<$resTxt>"}
+    if {$ret!=0} {return [list $ret $resTxt]}
+  }
+  
+  if {$imei2 != ""} {
+    foreach {ret resTxt} [overwriteCurrentIMEI2 $imei2 $id] {}
+    if $::debugWS {puts " MacReg after overImei2 ret:<$ret> resTxt:<$resTxt>"}
+    if {$ret!=0} {return [list $ret $resTxt]}
+  }
+  
+  foreach {ret resTxt} [macExtantCheck $mac1 $id] {}
+  if $::debugWS {puts " MacReg after macExtantCheck1 ret:<$ret> resTxt:<$resTxt>"}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  
+  if {$mac2 != ""} {
+    foreach {ret resTxt} [macExtantCheck $mac2 $id] {}
+    if $::debugWS {puts " MacReg after macExtantCheck2 ret:<$ret> resTxt:<$resTxt>"}
+    if {$ret!=0} {return [list $ret $resTxt]}
+  }
+  
+  set app_ver 3
+  
+  set secret1 [md5::md5 -hex MACREG@RAD_WS${mac1}]
+  set url $::MRserverURL/qupdateSeq/
+  set query1 [::http::formatQuery ID_NUMBER $id mac $mac1 SP_TYPE1 $sp1 SP_TYPE2 $sp2\
+     SP_TYPE3 $sp3 SP_TYPE4 $sp4 SP_TYPE5 $sp5 SP_TYPE6 $sp6 SP_TYPE7 $sp7 SP_TYPE8 $sp8\
+     APP_VER $app_ver SEQ 1 IMEI $imei1 IMEI2 $imei2 HAND $secret1]
+  foreach {ret resTxt} [Retrive_WS $url $query1 "Qupdate1"] {}
+  if $::debugWS {puts " MacReg after Qupdate1 ret:<$ret> resTxt:<$resTxt>"}
+    
+    
+  if {$mac2 != ""} {
+    set secret2 [md5::md5 -hex MACREG@RAD_WS${mac2}]
+    set query2 [::http::formatQuery ID_NUMBER $id mac $mac2 SP_TYPE1 $sp1 SP_TYPE2 $sp2\
+       SP_TYPE3 $sp3 SP_TYPE4 $sp4 SP_TYPE5 $sp5 SP_TYPE6 $sp6 SP_TYPE7 $sp7 SP_TYPE8 $sp8\
+       APP_VER $app_ver SEQ 2 IMEI $imei1 IMEI2 $imei2 HAND $secret2]
+    foreach {ret resTxt} [Retrive_WS $url $query2 "Qupdate2"] {}
+    if $::debugWS {puts " MacReg after Qupdate2 ret:<$ret> resTxt:<$resTxt>"}
+  }  
+  
+  return [list 0 ""]
+}
+
+
+# ***************************************************************************
+# checkIdNumber
+# checkIdNumber EA100448957
+# ***************************************************************************
+proc checkIdNumber {id} {
+  if $::debugWS {puts "\n checkIdNumber $id"}
+  if {![string is alpha [string range $id 0 1]] || ![string is integer [string range $id 2 end]]} {
+    return [list "-1" "$id is not valid"]
+  }
+  set id_len [string length $id]
+  if {$id_len<11} {
+    return [list -1 "$id is too short, < 11 characters"]
+  } elseif {$id_len==11} {
+    return [list 0 "$id"]
+  } elseif {$id_len>12} {
+    return [list -1 "$id is too long, > 12 characters"]
+  } elseif {$id_len==12} {
+    set id_contDig [string index $id end]
+    set calc_contDig [calcControlDigit $id]
+    if {$id_contDig != $calc_contDig} {
+      return [list "-1" "$id is not valid"]
+    } else {
+      return [list 0 "$id"]
+    }
+  }
+}
+proc checkIdNumberIsValid {id} {
+  if $::debugWS {puts "\n checkIdNumberIsValid $id"}
+  set url $::MRserverURL/qry_check_valid_idnumber/
+  set query [::http::formatQuery idNumber $id]
+  foreach {ret resTxt} [Retrive_WS $url $query "Check IdNumber is Valid $id"] {}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  
+  ##::asadict == Name qry.check.valid.idnumber result true
+  if {[lsearch $::asadict "result"]!="-1" && [lsearch $::asadict "true"]!="-1"} {
+    return [list 0 ""]
+  } else {
+    return [list -1 "$id is not Valid"]
+  }  
+}
+# ***************************************************************************
+# calcControlDigit
+#  calcControlDigit DF1002704216
+# ***************************************************************************
+proc calcControlDigit {id} {
+  set barcode [string range $id 3 end-1]  ; # DF1002704216 -> 00270421
+  set temp 0
+  for {set i 0} {$i<8} {incr i} {
+    if {[expr {$i % 2}] == 0 } {
+      incr temp [expr {[string index $barcode $i] * 3}]
+    } else {
+      incr temp [string index $barcode $i]
+      # print(id_barcode, barcode[i], temp)
+    }
+  }  
+  set temp [expr {10 - [expr {$temp % 10}]}]
+  if {$temp == 10} {
+    return 0
+  } else {
+    return $temp
+  }  
+}      
+
+# ***************************************************************************
+# checkIMEIisValid
+#  checkIMEIisValid 860548048283565
+# ***************************************************************************
+proc checkIMEIisValid {imei} {
+  if $::debugWS {puts "\n checkIMEIisValid $imei"}
+  if ![string is double $imei] {
+    return [list -1 "$imei has not only digits"]
+  }
+  set url $::MRserverURL/check_imei_valid/
+  set query [::http::formatQuery imei $imei]
+  foreach {ret resTxt} [Retrive_WS $url $query "Check IMEI is Valid $imei"] {}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  if {[lindex $resTxt 0]=="true"} {
+    return [list 0 ""]
+  } else {
+    return [list -1 "IMEI $imei isn't Valid"]
+  }  
+}
+
+# ***************************************************************************
+# overwriteAllMacAndIMEI
+# overwriteAllMacAndIMEI EA100448957 862940033957501 862940033962501 123456123456 AABBCCDDEEFF
+# overwriteAllMacAndIMEI EA100448957 1234567890123 1234567890123 123456123456 AABBCCDDEEFF
+# ***************************************************************************
+proc overwriteAllMacAndIMEI {id imei1 imei2 mac1 mac2} {
+  if $::debugWS {puts "\n overwriteAllMacAndIMEI $id $imei1 $imei2 $mac1 $mac2"}
+  set url $::MRserverURL/getConfirmationMessage/
+  set query [::http::formatQuery imei1 $imei1 mac1 $mac1 imei2 $imei2 mac2 $mac2 idnumber $id]
+  foreach {ret resTxt} [Retrive_WS $url $query "Get Confirmation Message"] {}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  if {[lsearch $resTxt *ConfirmationMessage*]=="-1"} {return [list -1 "No Confirmation Message"]}
+  if {[lindex $resTxt 1] == ""} {return [list 0 ""]}
+  regsub -all @ [lindex $resTxt 1] "\n" confirmationMessageText2
+  return [managerApproval $confirmationMessageText2]
+}
+
+proc overwriteCurrentIMEI {imei id} {
+  if $::debugWS {puts "\n overwriteCurrentIMEI $imei $id"}
+  return [imei_check $imei $id]
+}
+proc overwriteCurrentIMEI2 {imei2 id} {
+  if $::debugWS {puts "\n overwriteCurrentIMEI2 $imei2 $id"}
+  return [imei2_check $imei2 $id]
+}
+
+# ***************************************************************************
+# imei_check
+#  imei_check 1234567890123 EA100448957
+# ***************************************************************************
+proc imei_check {imei id} {
+  if $::debugWS {puts "\n imei_check $imei $id"}
+  set url $::MRserverURL/q005_imei_check/
+  set query [::http::formatQuery imei $imei]
+  foreach {ret resTxt} [Retrive_WS $url $query "Check IMEI $imei"] {}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  if $::debugWS {puts "imei_check resTxt1:<$resTxt>"}
+  
+  set id_number_indx [lsearch $resTxt "id_number"]
+  # if {$id_number_indx=="-1"} {return -1}
+  if {$id_number_indx=="-1"} {return [list 0 ""]}
+  set id_number [lindex $resTxt 1+$id_number_indx]
+  if {$id!=$id_number && $id_number!=0} {
+    foreach {ret resTxt} [deleteImei $id_number] {}
+  }
+  if $::debugWS {puts "imei_check resTxt2:<$resTxt>"}
+  return [list $ret $resTxt]
+}
+
+# ***************************************************************************
+# imei2_check
+#  imei2_check 1234567890123 EA100448957
+# ***************************************************************************
+proc imei2_check {imei2 id} {
+  if $::debugWS {puts "\n imei2_check $imei2 $id"}
+  set url $::MRserverURL/q0051_imei_check/
+  set query [::http::formatQuery imei2 $imei2 Imei_Index 2]
+  foreach {ret resTxt} [Retrive_WS $url $query "Check IMEI2 $imei2"] {}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  if $::debugWS {puts "imei_check2 resTxt:<$resTxt>"}
+  
+  set id_number_indx [lsearch $resTxt "id_number"]
+  # if {$id_number_indx=="-1"} {return -1}
+  if {$id_number_indx=="-1"} {return [list 0 ""]}
+  set id_number [lindex $resTxt 1+$id_number_indx]
+  if {$id!=$id_number && $id_number!=0} {
+    foreach {ret resTxt} [deleteImei2 $id_number] {}
+  }
+  if $::debugWS {puts "imei_check2 resTxt2:<$resTxt>"}
+  return [list $ret $resTxt]
+}
+
+# ***************************************************************************
+# deleteImei
+# deleteImei EA100448957
+# ***************************************************************************
+proc deleteImei {id_number} {
+  if $::debugWS {puts "\n deleteImei $id_number"}
+  set secret [md5::md5 -hex MACREG@RAD_WS${id_number}]
+  set url $::MRserverURL/q006_imei_delete/
+  set query [::http::formatQuery idnumber $id_number HAND $secret]
+  set resLst [Retrive_WS $url $query "Delete IMEI from $id_number"]
+  if {[lsearch $resLst "-100"]!=0} {
+    return [list -1 -100]
+  }
+  return [list 0 ""]
+}
+
+# ***************************************************************************
+# deleteImei2
+# deleteImei2 EA100448957
+# ***************************************************************************
+proc deleteImei2 {id_number} {
+  if $::debugWS {puts "\n deleteImei2 $id_number"}
+  set secret [md5::md5 -hex MACREG@RAD_WS${id_number}]
+  set url $::MRserverURL/q0061_imei_delete/
+  set query [::http::formatQuery idnumber $id_number HAND $secret Imei_Index 2]
+  set resLst [Retrive_WS $url $query "Delete IMEI2 from $id_number"]
+  if {[lsearch $resLst "-100"]!=0} {
+    return [list -1 -100]
+  }
+  return [list 0 ""]
+}
+
+
+
+# ***************************************************************************
+# getConfirmationMessage
+#
+# getConfirmationMessage EA1004489579 123456123456 AABBCCDDEEFF 862940033957501 862940033962501
+# getConfirmationMessage EA1004489579 123456123456 AABBCCDDEEFF "" ""
+# ***************************************************************************
+proc getConfirmationMessage {id mac1 mac2 imei1 imei2} {
+  if $::debugWS {puts "\ngetConfirmationMessage $id $mac1 $mac2 $imei1 $imei2"}
+  set id [format %.11s $id]
+  set url "http://ws-proxy01.rad.com:10211/MacRegREST/MacReg/Qry/getConfirmationMessage/"
+  set query [::http::formatQuery imei1 $imei1 mac1 $mac1 imei2 $imei2 mac2 $mac2 idnumber $id]
+  set resLst [Retrive_WS $url $query "Get Confirmation Message"]
+  foreach {ret resTxt} $resLst {}
+  if {$ret!=0} {
+    return $resLst
+  }
+  set confirmationMessage [lindex $resLst 1]
+  if {[lindex $confirmationMessage 0] != "ConfirmationMessage"} {
+    return [list -1 "Fail to get ConfirmationMessage"]
+  }
+  set confirmationMessageText [lindex $confirmationMessage 1]
+  if {$confirmationMessageText == {}} {
+    return [list 0 ""]
+  }
+  regsub -all @ $confirmationMessageText "\n" confirmationMessageText2
+  #regsub -all @ $confirmationMessageText "" confirmationMessageText2
+  return [managerApproval $confirmationMessageText2]
+}
+
+# ***************************************************************************
+# managerApproval
+# ***************************************************************************
+proc managerApproval {txt} {
+  if $::debugWS {puts "\nmanagerApproval <$txt>"}
+  set messageTxt ""
+  foreach {ret resTxt} [getManagerPassword] {}
+  if {$ret!=0} {
+    return [list $ret $resTxt]
+  } else {
+    set managerPassword $resTxt
+  }
+  # puts "managerApproval managerPassword : <$managerPassword>"
+  append messageTxt $txt \n " Please enter password to replace : " 
+  #set res [tk_messageBox -title "Enter password" -message $messageTxt -icon "info" -type okcancel]
+  set res -1
+  while 1 {
+    set res [dialgBox $messageTxt]
+    if $::debugWS {puts "managerApproval res of dialgBox : <$res>"}
+    if {$res=="-1"} {
+      ## Cancel
+      return [list -1 "No password"]
+    } else {
+      if {$res==$managerPassword} {
+        return [list 0 ""]
+      }
+    } 
+  } 
+  return {}
+}
+
+proc getManagerPassword {} {
+  set secret [md5::md5 -hex "MACREG@RAD_WS"]
+  set url "http://ws-proxy01.rad.com:10211/MacRegREST/MacReg/Qry/get_manager_password/"
+  set query [::http::formatQuery HAND $secret]
+  set resLst [Retrive_WS $url $query "Get Manager Password"]
+  foreach {ret resTxt} $resLst {}
+  if {$ret!=0} {
+    return $resLst
+  }
+  return [list 0 [lindex $resTxt 1]]
+}
+
+proc dialgBox {messageTxt} {
+  if [winfo exists .tmpldlg] {
+    destroy .tmpldlg
+  }
+  set dlg [eval Dialog .tmpldlg -modal local -separator 0 -title {EnterPassword} -side bottom -anchor c -default 0 -cancel 1]
+  # foreach but "OK Cancel" {
+    # $dlg add -text $but -name $but -command [list btn $dlg $but]
+  # }
+  set msg [message [$dlg getframe].msg -text $messageTxt  \
+     -anchor c -aspect 20000 -justify left]
+  pack $msg -anchor w -padx 3 -pady 3 ; #-fill both -expand 1
+  
+  set fr [frame [$dlg getframe].fr -bd 0 -relief groove]
+    set ent [entry $fr.ent -show *] 
+    pack $ent -padx 2 -fill x
+  pack $fr -padx 2 -pady 2 -fill both -expand 1 
+  focus -force $ent
+  
+  foreach but "OK Cancel" {
+    $dlg add -text $but -name $but -command [list btn $dlg $but $ent]
+  }
+  
+  foreach {ret entTxt} [$dlg draw] {}
+  if $::debugWS {puts "DialogBox ret:<$ret> entTxt:<$entTxt>\n"}	
+  if {$ret=="Cancel"} {
+    set ret -1
+  } else {
+    set ret $entTxt
+  }
+  if $::debugWS {puts "DialogBox ret:<$ret>\n"}	
+  destroy $dlg
+  return $ret
+}
+
+proc btn {dlg but ent} {
+  set entTxt [$ent get] 
+  if $::debugWS {puts "btn $but <$entTxt>"}
+  update
+  Dialog::enddialog $dlg [list $but $entTxt]
+  #return $entTxt
+}
+
+
+# ***************************************************************************
+# macExtantCheck
+# macExtantCheck 123456123456 EA100448957
+# ***************************************************************************
+proc macExtantCheck {mac id_number} {
+  if $::debugWS {puts "\n macExtantCheck $mac $id_number"}
+  set secret [md5::md5 -hex MACREG@RAD_WS${mac}]
+  set ret 0
+  
+  set url $::MRserverURL/q001_mac_extant_chack/
+  set query [::http::formatQuery macID $mac]
+  foreach {ret resTxt} [Retrive_WS $url $query "Check Connected to $mac"] {}
+  if $::debugWS {puts "* ret after q001_mac_extant_chack: <$ret> <$resTxt>"}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  
+  catch {unset id}
+  catch {unset ret}
+  if {$resTxt!=""} {
+    set id_lbl_indx [lsearch $resTxt "id"]
+    if {$id_lbl_indx=="-1"} {return -1}
+    set id [lindex $resTxt 1+$id_lbl_indx]
+    set secretForDel [md5::md5 -hex MACREG@RAD_WS${id}]
+    set url $::MRserverURL/q002_delete_mac_extant/
+    set query [::http::formatQuery macID $id HAND $secretForDel]
+    foreach {ret resTxt} [Retrive_WS $url $query "Delete Connected to $mac"] {}
+  }
+  if $::debugWS {puts "* ret after q002_delete_mac_extant: <$ret> <$resTxt>"}
+  if [string match {*-100*} $resTxt] {return [list $ret "-100"]}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  
+  catch {unset ret}
+  set url $::MRserverURL/q003_idnumber_extant_check/
+  set query [::http::formatQuery idNumber $id_number]
+  foreach {ret resTxt} [Retrive_WS $url $query "Check Connected to $id_number"] {}
+  if $::debugWS {puts "* ret after q003_idnumber_extant_check: <$ret> <$resTxt>"}
+  if {$ret!=0} {return [list $ret $resTxt]}
+  
+  catch {unset id}
+  catch {unset ret}
+  if {$resTxt!=""} {
+    set id_lbl_indx [lsearch $resTxt "id"]
+    if {$id_lbl_indx=="-1"} {return -1}
+    set id [lindex $resTxt 1+$id_lbl_indx]
+    set secretForDel [md5::md5 -hex MACREG@RAD_WS${id}]
+    set url $::MRserverURL/q002_delete_mac_extant/
+    set query [::http::formatQuery macID $id HAND $secretForDel]
+    foreach {ret resTxt} [Retrive_WS $url $query "Delete Connected to $mac"] {}
+  }
+  if $::debugWS {puts "* ret after q002_delete_mac_extant: <$ret> <$resTxt>"}
+  if [string match {*-100*} $resTxt] {return [list $ret "-100"]}
+  
+  return $ret
+}
+
+
+
+
 puts "Get_File //prod-svm1/tds/Install/ATEinstall/bwidget1.8/ arrow.tcl c:/temp/arrow.tcl"
 puts "CheckMac EA1004489579 112233445566"
 puts "Get_PcbTraceIdData 21181408 {pcb product \"po number\"}"
 puts "Get_MrktName EA1004489579"
 puts "Get_MrktNumber ETX-1P/ACEX/1SFP1UTP/4UTP/W"
 puts "Get_OI4Barcode EA1004489579"
-puts "Get_SwVersions DC1002287083" 
+puts "Get_SwVersions DC1002287083"
+puts "set ::debugWS 0"
+puts "MacReg 123456123456 EA1004489579"

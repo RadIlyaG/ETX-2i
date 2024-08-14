@@ -42,6 +42,15 @@ proc BuildTests {} {
     if {$b=="19V"} {
        lappend lTestNames DnfvOK
     } 
+    
+    if {$gaSet(DefaultCF)!="" && $gaSet(DefaultCF)!="c:/aa"} {
+      # if {$ret=="0"} {
+        # set gaSet(fail) "No User Configuration File at Agile"
+        # return -1
+      # }
+      lappend lTestNames LoadDefaultConfiguration CheckUserDefaultFile
+    }
+      
     lappend lTestNames Mac_BarCode SetToDefaultAll
   } elseif {$b=="DNFV"} {    
     if {$p=="I7"} {
@@ -1178,6 +1187,8 @@ proc DnfvMac_BarCode {run} {
 proc LoadDefaultConfiguration {run} {
   global gaSet  
   Power all on
+  set ret [FactDefault std]
+  if {$ret!=0} {return $ret}
   set ret [LoadDefConf]
   return $ret
 }
@@ -1577,4 +1588,25 @@ proc Connectivity {run} {
   set ret [FactDefault std]
   if {$ret!=0} {return $ret}
   return [Connectivity_Test]
+}
+# ***************************************************************************
+# SetToDefaultAll_Save
+# ***************************************************************************
+proc SetToDefaultAll_Save {run} {
+  global gaSet 
+  Power all on
+  set ret [FactDefault stda]
+  if {$ret!=0} {return $ret}
+  set ret [SaveRunningConf]
+  return $ret 
+}
+
+# ***************************************************************************
+# CheckUserDefaultFile
+# ***************************************************************************
+proc CheckUserDefaultFile {run} {
+  global gaSet 
+  Power all on
+  set ret [CheckUserDefaultFilePerf]
+  return $ret 
 }
