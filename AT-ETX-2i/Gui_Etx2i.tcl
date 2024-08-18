@@ -4,7 +4,8 @@
 proc GUI {} {
   global gaSet gaGui glTests  
   
-  wm title . "$gaSet(pair) : $gaSet(DutFullName)"
+  wm title . "$gaSet(pair) : "
+  #wm title . "$gaSet(pair) : $gaSet(DutFullName)"
   if {![info exists gaSet(eraseTitle)]} {
     set gaSet(eraseTitle) 1
   }

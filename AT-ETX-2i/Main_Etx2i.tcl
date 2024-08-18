@@ -1541,6 +1541,10 @@ proc SetDownload {run} {
 # ***************************************************************************
 proc Pages {run} {
   global gaSet buffer
+  
+  set ret [EntryBootMenu]
+  if {$ret!=0} {return $ret}
+  
   set ret [GetPageFile $gaSet($::pair.barcode1)]
   if {$ret!=0} {return $ret}
   

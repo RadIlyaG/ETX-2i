@@ -153,8 +153,8 @@ proc GetPageFile {barcode} {
 ###   set gaGet(IdNum.p3.02_13) [lrange $gaGet(page3) 2 13]
 ###   set gaGet(MacQuantity.p3.14) [lrange $gaGet(page3) 14 14]
 ###   set gaGet(1stMac.p3.15_20) [lrange $gaGet(page3) 15 20]
-  file delete -force $fileName
-  puts $res
+  # file delete -force $fileName
+  # puts $res
   parray gaGet  
     
   return 0

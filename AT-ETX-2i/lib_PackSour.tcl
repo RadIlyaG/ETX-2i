@@ -188,8 +188,8 @@ set gaSet(cbTesterMode) "FTI"
 
 GUI
 #ToggleTestMode
-BuildTests
-#update
+# BuildTests
+update
 
 wm deiconify .
 wm geometry . $gaGui(xy)
