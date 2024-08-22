@@ -31,7 +31,7 @@ proc BuildTests {} {
     #lappend USBportTest
     lappend lTestNames FansTemperature DyingGaspConf DyingGaspTest  \
         DataTransmissionConf DataTransmissionUTP DataTransmissionSFP
-    if {$p=="P"} {
+    if {$p=="P" || $gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
       lappend lTestNames ExtClk 
     }    
     lappend lTestNames DDR_multi

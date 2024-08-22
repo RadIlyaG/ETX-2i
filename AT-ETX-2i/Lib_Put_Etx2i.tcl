@@ -474,7 +474,7 @@ proc PS_IDTest {} {
     set psQty [regexp -all AC $buffer]
 	incr psQty [regexp -all DC $buffer]
   }
-  if {$b=="M"} {
+  if {$b=="M" || $b=="Half19"} {
     set psQtyShBe 1
   } else {
     set psQtyShBe 2
@@ -487,7 +487,7 @@ proc PS_IDTest {} {
   }
   #regexp {\-+\s(.+)\s+FAN} $buffer - psStatus
   regexp {\-+\s(.+\s+FAN)} $buffer - psStatus
-  if {$b=="M"} {
+  if {$b=="M" || $b=="Half19"} {
     regexp {1\s+\w+\s+([\s\w]+)\s+FAN} $psStatus - ps1Status
   } else { 
     regexp {1\s+\w+\s+([\s\w]+)\s+2} $psStatus - ps1Status
@@ -516,7 +516,7 @@ proc PS_IDTest {} {
     return -1
   }
   
-  if {$b!="M"} {
+  if {$b!="M" && $b!="Half19"} {
     regexp {2\s+\w+\s+([\s\w]+)\s+} $psStatus - ps2Status
     set ps2Status [string trim $ps2Status]
     set markHP 0
@@ -569,7 +569,11 @@ proc PS_IDTest {} {
   if {$ret!=0} {return $ret}
   set ret [Send $com "show summary\r" port]
   if {$ret!=0} {return $ret}
-  foreach eth [list ETH-0/1 ETH-0/2 ETH-0/3 ETH-0/4] {
+  set ports [list ETH-0/1 ETH-0/2 ETH-0/3 ETH-0/4]
+  if {$b=="Half19"} {
+     lappend ports ETH-0/5
+  }
+  foreach eth $ports {
     set res [regexp "$eth\\s+Up\\s+\(Up\|Down\)+\\s" $buffer ma opSt]
     puts "$eth res:$res opSt:<$opSt>"; update
     if {$res==0 || $opSt!="Up"} {
@@ -1439,6 +1443,7 @@ proc Login {} {
     Send $com \x1F\r\r -2I
   }
   if {[string match *-2I* $buffer]} {
+    set gaSet(prompt) "-2I"
     set ret 0
     return 0
   }
@@ -1446,6 +1451,7 @@ proc Login {} {
     set ret 0
     return 0
   } 
+  
   
   if {[string match *user* $buffer]} {
     Send $com su\r stam 0.25
@@ -1478,6 +1484,7 @@ proc Login {} {
     #set ret [MyWaitFor $gaSet(comDut) {ETX-2I user> } 5 60]
     if {([string match {*-2I*} $buffer]==1) || ([string match {*user>*} $buffer]==1)} {
       puts "if1 <$buffer>"
+      set gaSet(prompt) "-2I"
       set ret 0
       break
     }
@@ -1499,6 +1506,7 @@ proc Login {} {
     if {[string match *user* $buffer]} {
       Send $com su\r stam 1
       set ret [Send $com 1234\r "-2I"]
+      set gaSet(prompt) "-2I"
     }
   }  
   if {$ret!=0} {
@@ -1718,8 +1726,8 @@ proc LoadDefConf {} {
   set initName [regsub -all / $dbr_asmbl .]
   
   set localUCF c:/temp/[clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${initName}_$gaSet(pair).txt
-  set ret [Get_ConfigurationFile $dbr_asmbl $localUCF]
-  puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF : <$ret>"
+  #set ret [Get_ConfigurationFile $dbr_asmbl $localUCF]
+  #puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF : <$ret>"
   foreach {ret size} [Get_ConfigurationFile $dbr_asmbl $localUCF] {}
   puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF ret:<$ret> size:<$size>"
   if {$ret=="-1"} {
@@ -1728,9 +1736,9 @@ proc LoadDefConf {} {
   }
   
   set entDUTconfFile $::tmpLocalUCF
-  set entDUTconfFileSize [file size c:/temp/$entDUTconfFile]
+  set entDUTconfFileSize [file size $entDUTconfFile]
   
-  set localUCFSize [file size c:/temp/$localUCF]
+  set localUCFSize [file size $localUCF]
   
   puts "\nDUT entry $entDUTconfFile:<$entDUTconfFileSize>,  LoadDefConf $localUCF:<$localUCFSize>"
   if {$entDUTconfFileSize!=$localUCFSize} {
@@ -1747,7 +1755,7 @@ proc LoadDefConf {} {
   set com $gaSet(comDut)
   Send $com "exit all\r" stam 0.25 
   
-  set cf c:/temp/$localUCF ; #set cf $gaSet(defConfCF) 
+  set cf $localUCF ; #set cf $gaSet(defConfCF) 
   set cfTxt "DefaultConfiguration"
   set ret [DownloadConfFile $cf $cfTxt 1]
   if {$ret!=0} {return $ret}

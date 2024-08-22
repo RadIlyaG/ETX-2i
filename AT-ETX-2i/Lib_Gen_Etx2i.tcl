@@ -161,7 +161,7 @@ proc SaveUutInit {fil} {
   if [info exists gaSet(DutInitName)] {
     puts $id "set gaSet(DutInitName) \"$gaSet(DutInitName)\""
   }
-  foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR DNFV Default} {
+  foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR DNFV Default Half19} {
     if ![info exists gaSet([set indx]CF)] {
       set gaSet([set indx]CF) ??
     }

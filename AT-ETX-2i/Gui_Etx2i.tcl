@@ -644,7 +644,7 @@ proc GuiInventory {} {
     if ![info exists gaSet($par)] {set gaSet($par) ??}
     set gaTmpSet($par) $gaSet($par)
   }
-  foreach indx {19V 19 M DGasp ExtClk RTR DNFV Boot SW Default} { 
+  foreach indx {19V 19 M DGasp ExtClk RTR DNFV Boot SW Default Half19} { 
     if ![info exists gaSet([set indx]CF)] {set gaSet([set indx]CF) c:/aa}
     set gaTmpSet([set indx]CF)  $gaSet([set indx]CF)
   }
@@ -701,7 +701,7 @@ proc GuiInventory {} {
   set txtWidth 30
   if {$gaSet(dutBox)!="DNFV"} {
     ## no need configuration files for DNFV    
-    foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR} {
+    foreach indx {Boot SW 19V 19 M Half19 DGasp ExtClk RTR} {
       if {$indx==$gaSet(dutBox) || $indx=="DGasp" || $indx=="ExtClk" || $indx=="RTR" || $indx=="Boot" || $indx=="SW"} {
         set fr [frame $base.fr$indx -bd 0 -relief groove]
           if {$indx=="Boot" || $indx=="SW"} {
