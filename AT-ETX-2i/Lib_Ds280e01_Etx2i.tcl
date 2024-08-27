@@ -94,7 +94,7 @@ proc GetPageFile {barcode} {
   # ##file delete -force $fileName 
   
   set trac ""
-  foreach {ret resTxt} [Get_Pages $barcode $trac 1 ] {}
+  foreach {ret resTxt} [::RLWS::Get_Pages $barcode $trac 1 ] {}
   if {$ret!=0} {
     set gaSet(fail) $resTxt
     puts stderr $resTxt 

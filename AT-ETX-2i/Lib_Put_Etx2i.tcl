@@ -1715,7 +1715,7 @@ proc DateTime_Set {} {
 proc LoadDefConf {} {
   global gaSet buffer 
   
-  foreach {res_val res_txt} [Get_OI4Barcode $gaSet(1.barcode1)] {}
+  foreach {res_val res_txt} [::RLWS::Get_OI4Barcode $gaSet(1.barcode1)] {}
   puts "MainEcoCheck OperationItem4Barcode res_val:<$res_val> res_txt:<$res_txt>"
   if {$res_val=="-1"} {
     set gaSet(fail) $res_txt
@@ -1728,10 +1728,10 @@ proc LoadDefConf {} {
   set localUCF c:/temp/[clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${initName}_$gaSet(pair).txt
   #set ret [Get_ConfigurationFile $dbr_asmbl $localUCF]
   #puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF : <$ret>"
-  foreach {ret size} [Get_ConfigurationFile $dbr_asmbl $localUCF] {}
+  foreach {ret size} [::RLWS::Get_ConfigurationFile $dbr_asmbl $localUCF] {}
   puts "LoadDefConf ret of Get_ConfigurationFile  $dbr_asmbl $localUCF ret:<$ret> size:<$size>"
   if {$ret=="-1"} {
-    set gaSet(fail) "Get Default Configuration File Fail"
+    set gaSet(fail) $size
     return -1
   }
   

@@ -595,7 +595,7 @@ proc GetDbrName {} {
   # close $fileId
   
   
-  foreach {ret resTxt} [Get_OI4Barcode $barcode] {}
+  foreach {ret resTxt} [::RLWS::Get_OI4Barcode $barcode] {}
   if {$ret=="0"} {
     #  set dbrName [dict get $ret "item"]
     set dbrName $resTxt
@@ -648,10 +648,10 @@ proc GetDbrName {} {
   update
   
   set ::tmpLocalUCF c:/temp/[clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]_${gaSet(DutInitName)}_$gaSet(pair).txt
-  foreach {ret size} [Get_ConfigurationFile $gaSet(DutFullName) $::tmpLocalUCF] {}
+  foreach {ret size} [::RLWS::Get_ConfigurationFile $gaSet(DutFullName) $::tmpLocalUCF] {}
   puts "GetDbrName ret of Get_ConfigurationFile  $gaSet(DutFullName) $::tmpLocalUCF ret:<$ret> size:<$size>"
   if {$ret=="-1"} {
-    set gaSet(fail) "Get Default Configuration File Fail"
+    set gaSet(fail) $size
     RLSound::Play fail
     Status "Test FAIL"  red
     DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "Get Default Configuration File Problem"
@@ -1157,7 +1157,7 @@ proc GetMac {fi} {
     # return -1
   # }
   # return [lindex $buffer 0]
-  foreach {ret resTxt} [Get_Mac 1] {}
+  foreach {ret resTxt} [RLWS::Get_Mac 1] {}
   if {$ret!=0} {
     set gaSet(fail) $resTxt
     return $ret
@@ -1193,7 +1193,7 @@ proc GetDbrSW {barcode} {
 #     return -1
 #   }  
   #catch {exec $gaSet(javaLocation)/java -jar $::RadAppsPath/SWVersions4IDnumber.jar $barcode} b
-  foreach {res b} [Get_SwVersions $barcode] {}
+  foreach {res b} [::RLWS::Get_SwVersions $barcode] {}
   puts "GetDbrSW b:<$b>" ; update
   after 1000
   set swIndx [lsearch $b $gaSet(swPack)]  

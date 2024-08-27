@@ -250,7 +250,7 @@ proc ReadBarcode {} {
         # puts "Id-Mac link or error"
         # set gaSet(1.barcode$la.IdMacLink) "link"
       # }
-      foreach {ret resTxt} [CheckMac $barcode AABBCCFFEEDD] {}
+      foreach {ret resTxt} [::RLWS::CheckMac $barcode AABBCCFFEEDD] {}
       puts "CheckMac $barcode ret:<$ret> resTxt:<$resTxt>" ; update
       if {$ret=="-1"} {
         puts "Id-Mac error:  $resTxt"
