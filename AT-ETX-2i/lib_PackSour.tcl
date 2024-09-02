@@ -129,6 +129,7 @@ package require RLAutoUpdate
 package require registry
 set gaSet(hostDescription) [registry get "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters" srvcomment ]
 package require sqlite3
+package require twapi
 
 source Gui_Etx2i.tcl
 source Main_Etx2i.tcl

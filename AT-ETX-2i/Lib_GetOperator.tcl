@@ -62,7 +62,7 @@ proc GetOperator {args} {
     if {$ret=="Cancel"} {
       return -1
     }
-    set empId [string toupper $gaGetOpDBox(entVal1)]
+    set empId [string trim [string toupper $gaGetOpDBox(entVal1)]]
     puts "entryValue:<$empId>"
 #     if {([string length $operator]<2) || \
 #         ([string length $operator]==12 && [string is alpha [string range $operator 0 1]]  && [string is digit [string range $operator 2 end]] ) || \

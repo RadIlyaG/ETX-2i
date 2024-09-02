@@ -1707,7 +1707,7 @@ proc ::RLWS::_macExtantCheck {mac id_number} {
   return $ret
 }
 
-
+if 0 {
 proc CheckMac {id mac} {
   return [::RLWS::CheckMac id mac]
 }
@@ -1735,6 +1735,9 @@ proc Get_ConfigurationFile {dbr_assm localUCF} {
 proc MacServer {qty} {
   return [::RLWS::MacServer $qty]
 }
+proc Get_Mac {qty} {
+  return [::RLWS::Get_Mac $qty]
+}
 proc Get_Pages {id trId macs_qty} { 
   return [::RLWS::Get_Pages $id $trId $macs_qty]
 }
@@ -1746,6 +1749,7 @@ proc Get_SwVersions {id} {
 }
 proc UpdateDB2 {barcode uut hostDescription date tim status failTestsList failReason operator traceID poNumber data1 data2 data3} {
   return [::RLWS::UpdateDB2 $barcode $uut $hostDescription $date $tim $status $failTestsList $failReason $operator $traceID $poNumber $data1 $data2 $data3]
+}
 }
 
 if 1 {
@@ -1762,6 +1766,7 @@ puts "::RLWS::MacReg 123456123456 EA1004489579"
 puts "::RLWS::Get_ConfigurationFile ETX-2I-100G_FTR/DCRF/4Q/16SFPP/K10 c:/temp/1.txt"
 puts "::RLWS::Ping_Network"
 puts "::RLWS::Ping_Services"
+puts "::RLWS::Get_Mac 1"
 }
 
 puts ""
@@ -1775,6 +1780,7 @@ puts "Disconnect_Barcode EA1004489579"
 puts "Get_PcbTraceIdData 21181408 {pcb product {po number}}"
 puts "Get_ConfigurationFile ETX-2I-100G_FTR/DCRF/4Q/16SFPP/K10 c:/temp/1.txt"
 puts "MacServer 1"
+puts "Get_Mac 1"
 puts "Get_Pages IO3001960310 50190576 0"
 puts "Get_TraceId EA1004489579"
 puts "Get_TraceId DA200047522"

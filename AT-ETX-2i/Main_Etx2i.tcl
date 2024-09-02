@@ -13,28 +13,35 @@ proc BuildTests {} {
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
   if {$b!="DNFV"} {  
   
-    ## 29/09/2016 14:35:54
-    ## 6.0.1 reads the USB port without a special app
-    ## USBportConf  
-    
-    ## 29/09/2016 14:36:01
-    ## since DG mechanism  is located not on the PSs but on the board,
-    ## we should check it only one time
-    ## DyingGaspTest_2
     set lTestNames [list]
     if {$gaSet(performDownloadSteps)} {
       lappend lTestNames BootDownload SetDownload Pages SoftwareDownload ; # Set_DateTime Test_DateTime
     }
-    lappend lTestNames DDR_single SetToDefault PS_ID 
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      ## no DDR in DT
+    } else {
+      lappend lTestNames DDR_single
+    }
+    lappend lTestNames SetToDefault PS_ID 
     
     # from 2020.09.17 USB port did not checked
     #lappend USBportTest
-    lappend lTestNames FansTemperature DyingGaspConf DyingGaspTest  \
-        DataTransmissionConf DataTransmissionUTP DataTransmissionSFP
+    lappend lTestNames FansTemperature DyingGaspConf DyingGaspTest
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      lappend lTestNames DataTransmissionConfLoop DataTransmissionLoop
+    }
+    lappend lTestNames DataTransmissionConf DataTransmissionUTP DataTransmissionSFP
+
     if {$p=="P" || $gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
       lappend lTestNames ExtClk 
+    }   
+
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      ## no DDR in DT
+    } else {
+      lappend lTestNames DDR_multi
     }    
-    lappend lTestNames DDR_multi
+    
     if {$d=="D"} {
       lappend lTestNames DryContact 
     }
@@ -43,15 +50,14 @@ proc BuildTests {} {
        lappend lTestNames DnfvOK
     } 
     
+    lappend lTestNames SetToDefaultAll
+    
     if {$gaSet(DefaultCF)!="" && $gaSet(DefaultCF)!="c:/aa"} {
-      # if {$ret=="0"} {
-        # set gaSet(fail) "No User Configuration File at Agile"
-        # return -1
-      # }
       lappend lTestNames LoadDefaultConfiguration CheckUserDefaultFile
     }
       
-    lappend lTestNames Mac_BarCode SetToDefaultAll
+    lappend lTestNames Mac_BarCode
+    
   } elseif {$b=="DNFV"} {    
     if {$p=="I7"} {
       set lTestNames [list BIOS BurnMAC DnfvSoftwareDownload MacSwID VerifyBIOS\
@@ -83,8 +89,8 @@ proc BuildTests {} {
   }
   
   set gaSet(startFrom) [lindex $glTests 0]
-  $gaGui(startFrom) configure -values $glTests
-  
+  $gaGui(startFrom) configure -values $glTests -height [llength $glTests]
+  return {}
 }
 # ***************************************************************************
 # Testing
@@ -100,7 +106,7 @@ proc Testing {} {
     file mkdir c:/logs
     after 1000
   }
-  set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M"]
+  set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M.%S"]
   set gaSet(logFile) c:/logs/logFile_[set ti]_$gaSet(pair).txt
 #   if {[string match {*Leds*} $gaSet(startFrom)] || [string match {*Mac_BarCode*} $gaSet(startFrom)]} {
 #     set ret 0
@@ -115,11 +121,7 @@ proc Testing {} {
   set gaSet(curTest) ""
   update
     
-#   AddToLog "********* DUT start *********"
   AddToPairLog $gaSet(pair) "********* DUT start *********"
-#   if {$gaSet(dutBox)!="DNFV"} {
-#     AddToLog "$gaSet(1.barcode1)"
-#   }     
   puts "RunTests1 gaSet(startFrom):$gaSet(startFrom)"
 
   foreach numberedTest $lRunTests {
@@ -131,7 +133,6 @@ proc Testing {} {
       
     set testName [lindex [split $numberedTest ..] end]
     $gaSet(startTime) configure -text "$startTime ."
-#     AddToLog "Test \'$testName\' started"
     AddToPairLog $gaSet(pair) "Test \'$testName\' started"
     set ret [$testName 1]
     if {$ret!=0 && $ret!="-2" && $testName!="Mac_BarCode" && $testName!="ID" && $testName!="Leds"} {
@@ -149,7 +150,6 @@ proc Testing {} {
     } else {
       set retTxt "FAIL. Reason: $gaSet(fail)"
     }
-#     AddToLog "Test \'$testName\' $retTxt"
     AddToPairLog $gaSet(pair) "Test \'$testName\' $retTxt"
        
     puts "\n **** Test $numberedTest finish;  ret of $numberedTest is: $ret;  [MyTime]\n" 
@@ -275,7 +275,7 @@ proc DyingGaspTest {run} {
 # DyingGaspTest_1
 # ***************************************************************************
 proc DyingGaspTest_1 {run} {
-  global gaSet  buffer
+  global gaSet  buffer bu
   Power all on
 #   set gRelayState red
 #   IPRelay-LoopRed
@@ -294,24 +294,34 @@ proc DyingGaspTest_1 {run} {
 #   
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
   MuxMngIO ioToPc
-  set ret [ForceMode $b rj45 1]
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set forceRJ45port "0/2"
+    set DgInbandPort "0/2"    
+    set ret [ActiveConnector rj45 $forceRJ45port]
+  } else {
+    set forceRJ45port 1
+    set DgInbandPort "0/1"
+    set ret [ForceMode $b rj45 $forceRJ45port]
+  }
+  
   if {$ret!=0} {return $ret}
   Wait "Wait for RJ45 mode" 15
-  set ret [ReadEthPortStatus 0/1]
+  set ret [ReadEthPortStatus $DgInbandPort]
   if {$ret=="-1" || $ret=="-2"} {return $ret}
   if {$ret!="RJ45"} {
-    set gaSet(fail) "The $ret in port 0/1 is active instead of RJ45"
+    set gaSet(fail) "The $ret in port $DgInbandPort is active instead of RJ45"
     return -1
   }
  
-  set ret [SpeedEthPort 0/1 100]
+  set ret [SpeedEthPort $DgInbandPort 100]
   if {$ret!=0} {return $ret}
   
   for {set op 1} {$op <= 5} {incr op} { 
-    set ret [ReadEthPortStatus 0/1]
-    set res [regexp {Operational Status[\s\:]+(\w+)\s} $buffer m opStat]
+    set ret [ReadEthPortStatus $DgInbandPort]
+    #set res [regexp {Operational Status[\s\:]+(\w+)\s} $buffer m opStat]
+    set res [regexp {Operational Status[\s\:]+(\w+)\s} $bu m opStat]
     if {$res==0} {
-      set gaSet(fail) "Read Op State of eth 0/1 fail"
+      set gaSet(fail) "Read Op State of eth $DgInbandPort fail"
       return -1
     }
     puts "ret of ReadEthPortStatus $op: <$ret> opStat:<$opStat>"
@@ -320,7 +330,7 @@ proc DyingGaspTest_1 {run} {
     }
   }
   if {$opStat=="Down"} {
-    set gaSet(fail) "Op State of eth 0/1 is Down"
+    set gaSet(fail) "Op State of eth $DgInbandPort is Down"
     return -1
   } 
   
@@ -419,60 +429,29 @@ proc DateTime {run} {
 proc DataTransmissionConf {run} {
   global gaSet
   Power all on
-     
-  #ConfigEtxGen
-#   Status "EtxGen::GenConfig"
-#   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
-#   if {$b=="19V"} {
-#     set packRate 50000
-#   } else {
-#     set packRate 1200000
-#   }
-#   RLEtxGen::GenConfig $gaSet(idGen1) -updGen all -packRate $packRate
-#   after 2000
-#   set ret [ShutDown 0/1 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   for {set i 1} {$i<=10} {incr i} {
-#     set res1 [ReadEthPortOpStatus 0/1]
-#     set res2 [ReadEthPortOpStatus 0/2]
-#     puts "[MyTime] res1:<$res1> res2:<$res2>"
-#     if {$res1=="Down" && $res2=="Down"} {
-#       set ret 0
-#       break
-#     } else {
-#       set ret [Wait "Wait for 0/1 & 0/2 down" 10]
-#       if {$ret!=0} {return $ret}
-#     }
-#   }
-#   if {$ret!=0} {return $ret}
+
   puts "[MyTime] RLEtxGen::PortsConfig -admStatus down"; update
   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
   after 2000
       
-  set ret [DataTransmissionSetup]
+  set ret [DataTransmissionSetup noLoop]
   if {$ret!=0} {return $ret}
   
-#   after 2000
-#   set ret [ShutDown 0/1 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   for {set i 1} {$i<=10} {incr i} {
-#     set res1 [ReadEthPortOpStatus 0/1]
-#     set res2 [ReadEthPortOpStatus 0/2]
-#     puts "[MyTime] res1:<$res1> res2:<$res2>"
-#     if {$res1=="Up" && $res2=="Up"} {
-#       set ret 0
-#       break
-#     } else {
-#       set ret [Wait "Wait for 0/1 & 0/2 up" 10]
-#       if {$ret!=0} {return $ret}
-#     }
-#   }
+  return $ret
+} 
+# ***************************************************************************
+# 
+# ***************************************************************************
+proc DataTransmissionConfLoop {run} {
+  global gaSet
+  Power all on
+
+  puts "[MyTime] RLEtxGen::PortsConfig -admStatus down"; update
+  RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
+  after 2000
+      
+  set ret [DataTransmissionSetup loop]
+  if {$ret!=0} {return $ret}
   
   return $ret
 } 
@@ -485,63 +464,50 @@ proc DataTransmissionUTP {run} {
   after 2000
   puts "[MyTime] RLEtxGen::PortsConfig -admStatus down"; update
   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
-#   set ret [ShutDown 0/1 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   for {set i 1} {$i<=10} {incr i} {
-#     set res1 [ReadEthPortOpStatus 0/1]
-#     if {$res1=="-1" || $res1=="-2"} {return $res1}
-#     set res2 [ReadEthPortOpStatus 0/2]
-#     if {$res2=="-1" || $res2=="-2"} {return $res2}
-#     puts "[MyTime] res1:<$res1> res2:<$res2>"
-#     if {$res1=="Down" && $res2=="Down"} {
-#       set ret 0
-#       break
-#     } else {
-#       set ret [Wait "Wait for 0/1 & 0/2 down" 10]
-#       if {$ret!=0} {return $ret}
-#     }
-#   }
-#   if {$ret!=0} {return $ret}
   
-  if {$b!="19"} {}
-    set ret [ForceMode $b rj45 8]
-    if {$ret!=0} {return $ret}
-    Wait "Wait for RJ45 mode" 15
-    ## 13/07/2016 13:43:05 1/3 and 1/4 have been added
-    if {$b=="19"} {
-      if {[string match *19M* $gaSet(DutInitName)]==1} {
-        set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
-      } else {
-        set portsL [list 0/1 0/2 0/3 0/4 0/5 0/6 0/7 0/8]
-      }
-    } elseif {$b=="19V"} {
+  
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set ports [list 0/2 0/3 0/4 0/5]
+    set ret [ActiveConnector rj45 $ports]
+  } else {
+    set ports [list 1 2 3 4 5 6 7 8]
+    set ret [ForceMode $b rj45 $ports]
+  }
+  
+  if {$ret!=0} {return $ret}
+  Wait "Wait for RJ45 mode" 15
+  ## 13/07/2016 13:43:05 1/3 and 1/4 have been added
+  if {$b=="19"} {
+    if {[string match *19M* $gaSet(DutInitName)]==1} {
       set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
     } else {
-      set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
+      set portsL [list 0/1 0/2 0/3 0/4 0/5 0/6 0/7 0/8]
     }
-    foreach port $portsL {
-      set ret [ReadEthPortStatus $port]
-      if {$ret=="-1" || $ret=="-2"} {return $ret}
-      if {$ret!="RJ45"} {
-        set gaSet(fail) "The $ret in port $port is active instead of RJ45"
-        return -1
-      }
+  } elseif {$b=="19V"} {
+    set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
+  } else {
+    set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      set portsL [list 0/2 0/3 0/4 0/5]
     }
-  #{}
-#   set ret [AdminSave]
-#   if {$ret!=0} {return $ret}
-#   Power all off
-#   after 1000
-#   Power all on
+  }
+  foreach port $portsL {
+    set ret [ReadEthPortStatus $port]
+    if {$ret=="-1" || $ret=="-2"} {return $ret}
+    if {$ret!="RJ45"} {
+      set gaSet(fail) "The $ret in port $port is active instead of RJ45"
+      return -1
+    }
+  }
     
   if {$b=="19V"} {
     set packRate 50000
     set stream 8
   } else {
     set packRate 1200000
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      set packRate 1000000
+    }
     set stream 1
   }  
   InitEtxGen 1 
@@ -552,37 +518,6 @@ proc DataTransmissionUTP {run} {
     set ret [DnfvCross on] 
     if {$ret!=0} {return $ret}  
   }  
-  
-#   set ret [ShutDown 0/1 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   
-#   after 2000
-#   
-#   set ret [ShutDown 0/1 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   
-#   set ret [ShutDown 0/1 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   set ret [ShutDown 0/1 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   for {set i 1} {$i<=10} {incr i} {
-#     set res1 [ReadEthPortOpStatus 0/1]
-#     set res2 [ReadEthPortOpStatus 0/2]
-#     puts "[MyTime] res1:<$res1> res2:<$res2>"
-#     if {$res1=="Up" && $res2=="Up"} {
-#       set ret 0
-#       break
-#     } else {
-#       set ret [Wait "Wait for 0/1 & 0/2 up" 10]
-#       if {$ret!=0} {return $ret}
-#     }
-#   }
-#   if {$ret!=0} {return $ret}
   
   set ret [DataTransmissionTestPerf [list 1 2] $packRate]
   if {$ret==0} {
@@ -597,19 +532,6 @@ proc DataTransmissionSFP {run} {
   global gaSet gRelayState
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
   if {$b!="19"} {
-#     set ret [ForceMode $b sfp 8]
-#     if {$ret!=0} {return $ret}
-#     foreach port [list 0/1 0/2 0/3 0/4 1/1 1/2] {
-#       set ret [ReadEthPortStatus $port]
-#       if {$ret=="-1" || $ret=="-2"} {return $ret}
-#       if {$ret!="SFP"} {
-#         set gaSet(fail) "The $ret in port $port is active instead of SFP"
-#         return -1
-#       }
-#     }
-#     set ret [AdminSave]
-#     if {$ret!=0} {return $ret}
-
     if {$b=="19V"} {
       set ret [DnfvCross off]
       if {$ret!=0} {return $ret}
@@ -625,32 +547,6 @@ proc DataTransmissionSFP {run} {
     set ret [Wait "Wait for ETX up" 60]
     if {$ret!=0} {return $ret}
   } elseif {$b=="19"} {
-#     set gRelayState red
-#     IPRelay-LoopRed
-#     set txt "Connect the SFP ports instead of the RJ ports"
-#     SendEmail "ETX-2i" $txt
-#     RLSound::Play information
-#     set res [DialogBox -title "DataTransmission SFP" -icon /images/info\
-#         -message $txt -aspect 2000 -type "Ok Cancel"]
-#     if {$res=="Cancel"} {return -2}
-#     IPRelay-Green
-    
-    
-    #26/04/2017 15:22:59 Power off-on instead of force sfp
-#     set ret [ForceMode $b sfp 8]
-#     if {$ret!=0} {return $ret}
-#     Wait "Wait for SFP mode" 15
-#     foreach port [list 0/1 0/2 0/3 0/4 0/5 0/6 0/7 0/8] {
-#       set ret [ReadEthPortStatus $port]
-#       if {$ret=="-1" || $ret=="-2"} {return $ret}
-#       if {$ret!="SFP"} {
-#         set gaSet(fail) "The $ret in port $port is active instead of SFP"
-#         return -1
-#       }
-#     }
-#     set ret [AdminSave]
-#     if {$ret!=0} {return $ret}
-
     Power all off
     after 1000
     Power all on 
@@ -676,30 +572,15 @@ proc DataTransmissionSFP {run} {
   after 2000
   puts "[MyTime] RLEtxGen::PortsConfig -admStatus down"; update
   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
-#   set ret [ShutDown 0/1 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   for {set i 1} {$i<=10} {incr i} {
-#     set res1 [ReadEthPortOpStatus 0/1]
-#     set res2 [ReadEthPortOpStatus 0/2]
-#     puts "[MyTime] res1:<$res1> res2:<$res2>"
-#     if {$res1=="Down" && $res2=="Down"} {
-#       set ret 0
-#       break
-#     } else {
-#       set ret [Wait "Wait for 0/1 & 0/2 down" 10]
-#       if {$ret!=0} {return $ret}
-#     }
-#   }
-#   if {$ret!=0} {return $ret}
   
   if {$b=="19V"} {
     set packRate 50000
     set stream 8
   } else {
     set packRate 1200000
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      set packRate 1000000
+    }
     set stream 1
   }
   InitEtxGen 1 
@@ -710,32 +591,86 @@ proc DataTransmissionSFP {run} {
     set ret [DnfvCross on] 
     if {$ret!=0} {return $ret}
   }  
-  
-#   after 2000
-#   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus up
-#   set ret [ShutDown 0/1 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
-#   for {set i 1} {$i<=10} {incr i} {
-#     set res1 [ReadEthPortOpStatus 0/1]
-#     set res2 [ReadEthPortOpStatus 0/2]
-#     puts "[MyTime] res1:<$res1> res2:<$res2>"
-#     if {$res1=="Up" && $res2=="Up"} {
-#       set ret 0
-#       break
-#     } else {
-#       set ret [Wait "Wait for 0/1 & 0/2 up" 10]
-#       if {$ret!=0} {return $ret}
-#     }
-#   }
-#   if {$ret!=0} {return $ret}
-  
+   
   set ret [DataTransmissionTestPerf [list 3 4] $packRate]   
   if {$ret==0 && $b=="19V"} {
     set ret [DnfvCross off]
   } 
+  return $ret
+}
+# ***************************************************************************
+# 
+# ***************************************************************************
+proc DataTransmissionLoop {run} {
+  global gaSet gRelayState
+  foreach {b r p d ps} [split $gaSet(dutFam) .] {}
+  if {$b!="19"} {
+    if {$b=="19V"} {
+      set ret [DnfvCross off]
+      if {$ret!=0} {return $ret}
+      set ret [DnfvPower off] 
+      if {$ret!=0} {return $ret} 
+    }
+    
+    Power all off
+    after 1000
+    Power all on 
+    set ret [Login]
+    if {$ret!=0} {return $ret}
+    set ret [Wait "Wait for ETX up" 60]
+    if {$ret!=0} {return $ret}
+  } elseif {$b=="19"} {
+    Power all off
+    after 1000
+    Power all on 
+    set ret [Login]
+    if {$ret!=0} {return $ret}
+    set ret [Wait "Wait for ETX up" 30]
+    if {$ret!=0} {return $ret}
+    
+    if {[string match *19M* $gaSet(DutInitName)]==1} {
+      set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
+    } else {
+      set portsL [list 0/1 0/2 0/3 0/4 0/5 0/6 0/7 0/8]
+    }
+    foreach port $portsL {
+      set ret [ReadEthPortStatus $port]
+      if {$ret=="-1" || $ret=="-2"} {return $ret}
+      if {$ret!="SFP"} {
+        set gaSet(fail) "The $ret in port $port is active instead of SFP"
+        return -1
+      }
+    }
+  }
+  after 2000
+  puts "[MyTime] RLEtxGen::PortsConfig -admStatus down"; update
+  RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
+  
+  if {$b=="19V"} {
+    set packRate 50000
+    set stream 8
+  } else {
+    set packRate 1000000
+    set stream 1
+  }
+  InitEtxGen 1 
+  Status "EtxGen::GenConfig -packRate $packRate"
+  RLEtxGen::GenConfig $gaSet(idGen1) -updGen all -packRate $packRate -stream $stream
+  
+  if {$b=="19V"} {
+    set ret [DnfvCross on] 
+    if {$ret!=0} {return $ret}
+  }  
+   
+  set ret [DataTransmissionTestPerf [list 3] $packRate]   
+  if {$ret==0 && $b=="19V"} {
+    set ret [DnfvCross off]
+  } 
+  if {$ret==0} {
+    set ret [FactDefault std]
+    if {$ret!=0} {return $ret}    
+    MuxMngIO ioToGenMngToPc
+  }
   return $ret
 }
 # ***************************************************************************
@@ -745,11 +680,6 @@ proc DataTransmissionTestPerf {lGens packRate} {
   global gaSet
   Power all on 
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
-#   if {$b=="19V"} {
-#     set packRate 50000
-#   } else {
-#     set packRate 1200000
-#   }
   set ret [Wait "Waiting for stabilization" 10 white]
   if {$ret!=0} {return $ret}
   
@@ -895,20 +825,30 @@ proc Leds {run} {
   
   set txt ""
   RLSound::Play information
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set tstAlm ON
+    set p1 0/2
+    set p2 0/5
+  } else {
+    set tstAlm blinking
+    set p1 0/1
+    set p2 0/2
+  }
   set txt1 "Verify that:\n\
   GREEN \'PWR\' led is ON\n\
-  RED \'TST/ALM\' led is blinking\n\
+  RED \'TST/ALM\' led is $tstAlm\n\
   GREEN \'LINK\' led of \'MNG-ETH\' is ON\n\
   ORANGE \'ACT\' led of \'MNG-ETH\' is blinking\n"
   
   set txt2 "On each PS GREEN \'PWR\' led is ON\n"
-  
-  set txt3 "GREEN \'LINK/ACT\' leds of I/O ports 0/1 and 0/2 are blinking\n\
+    
+  set txt3 "GREEN \'LINK/ACT\' leds of I/O ports $p1 and $p2 are blinking\n\
   GREEN \'LINK/ACT\' leds of rest of ports are ON\n\
   EXT CLK's GREEN \'SD\' led is ON (if exists)"
   
+  
   append txt $txt1
-  if {$b!="M"} {
+  if {$b!="M" && $b!="Half19"} {
     append txt $txt2
   } 
   append txt $txt3
@@ -916,7 +856,8 @@ proc Leds {run} {
   set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
   update
   
-  catch {exec pskill.exe -t $pingId}
+  # catch {exec pskill.exe -t $pingId}
+  ::twapi::end_process $pingId -force
   
   if {$res!="OK"} {
     set gaSet(fail) "LED Test failed"
@@ -927,7 +868,7 @@ proc Leds {run} {
   set ret [Loopback off]
   if {$ret!=0} {return $ret} 
     
-  if {$b!="M"} {
+  if {$b!="M" && $b!="Half19"} {
     foreach ps {2 1} {
       Power $ps off
       #after 10000
@@ -1037,6 +978,9 @@ proc Leds {run} {
   
   set res [regexp {\.[AD]{1,2}C\.} $gaSet(DutInitName)]
   puts "Leds $gaSet(DutInitName) res:<$res>"
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set res 0
+  }
   if {$res==0} {
     # if two PSs - no message
     set ret 0
@@ -1244,20 +1188,8 @@ proc RtrConf {run} {
   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
   set ret [FactDefault stda]
   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/1 "shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "shutdown"]
-#   if {$ret!=0} {return $ret}
   set ret [RtrSetup]
   if {$ret!=0} {return $ret}
-#   after 2000
-#   puts "[MyTime] RLEtxGen::PortsConfig -admStatus up"; update
-#   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus up
-#   set ret [ShutDown 0/1 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   set ret [ShutDown 0/2 "no shutdown"]
-#   if {$ret!=0} {return $ret}
-#   after 2000
   
   return $ret
 } 
@@ -1292,12 +1224,20 @@ proc RtrData {run} {
   set id $gaSet(idGen1) 
   RLEtxGen::GenConfig $id -updGen all -packRate 20000
   
-  set da1 [ReadPortMac 0/1]
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set da1 [ReadPortMac 0/2]
+  } else {
+    set da1 [ReadPortMac 0/1]
+  }
   puts "RtrData da1:<$da1>"; update
   if {$da1=="-1" || $da1=="-2"} {
     return $da1
   }
-  set da2 [ReadPortMac 0/2]
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set da2 [ReadPortMac 0/5]
+  } else {
+    set da2 [ReadPortMac 0/2]
+  }
   puts "RtrData da2:<$da2>"; update
   if {$da2=="-1" || $da2=="-2"} {
     return $da2

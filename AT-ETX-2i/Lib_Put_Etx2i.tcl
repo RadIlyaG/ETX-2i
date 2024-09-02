@@ -230,8 +230,6 @@ proc FansTemperatureTest {} {
   }
   set gaSet(fail) "Logon fail"
   set com $gaSet(comDut)
-#   Send $com "exit all\r" stam 0.25 
-#   Send $com "logon\r" stam 0.25 
   set ret [LogonDebug $com]
   if {$ret!=0} {return $ret}
   Status "Read thermostat"
@@ -500,6 +498,7 @@ proc PS_IDTest {} {
     set markHP 1
     set ps1Status [lrange [split $ps1Status " "] 1 end ]
   }
+  AddToPairLog $gaSet(pair) "PS-1: $ps1Status"
   if {$ps1Status!="OK"} {
     set gaSet(fail) "Status of PS-1 is \'$ps1Status\'. Should be \'OK\'"
 #     AddToLog $gaSet(fail)
@@ -525,6 +524,7 @@ proc PS_IDTest {} {
       set markHP 1
       set ps2Status [lrange [split $ps2Status " "] 1 end ]
     }
+    AddToPairLog $gaSet(pair) "PS-2: $ps2Status"
     if {$ps2Status!="OK"} {
       set gaSet(fail) "Status of PS-2 is \'$ps2Status\'. Should be \'OK\'"
   #     AddToLog $gaSet(fail)
@@ -557,6 +557,7 @@ proc PS_IDTest {} {
     set sw [string range $sw 0 end-2]  
     puts "sw:$sw"
   }
+  AddToPairLog $gaSet(pair) "SW: $sw"
   if {$sw!=$gaSet(dbrSW)} {
     set gaSet(fail) "SW is \"$sw\". Should be \"$gaSet(dbrSW)\""
     return -1
@@ -585,6 +586,11 @@ proc PS_IDTest {} {
   set ret [ReadCPLD]
   if {$ret!=0} {return $ret}
   
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set ret [License enable]
+    if {$ret!=0} {return $ret}
+  }
+  
   if {![info exists gaSet(uutBootVers)] || $gaSet(uutBootVers)==""} {
     set ret [Send $com "exit all\r" 2I]
     if {$ret!=0} {return $ret}
@@ -605,96 +611,6 @@ proc PS_IDTest {} {
   }
   set gaSet(uutBootVers) ""
   
-#   set gRelayState red
-#   IPRelay-LoopRed
-#   SendEmail "ETX-2I" "Manual Test"
-#   RLSound::Play information
-#   set txt "Verify on each PS that GREEN led lights"
-#   set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
-#   update
-#   if {$res!="OK"} {
-#     set gaSet(fail) "LED Test failed"
-#     return -1
-#   } else {
-#     set ret 0
-#   }
-#   
-#   foreach PS {2 1} {
-#     Power $PS off
-#     after 3000
-#     set ret [Send $com "show environment\r" chassis]
-#     if {$ret!=0} {return $ret}
-#     if {$PS==1} {
-#       regexp {1\s+[AD]C\s+(\w+)\s} $buffer - val
-#     } elseif {$PS==2} {
-#       regexp {2\s+[AD]C\s+(\w+)\s} $buffer - val
-#     }
-#     puts "val:<$val>"
-#     if {$val!="Failed"} {
-#       set gaSet(fail) "PS $PS $val. Expected \"Failed\""
-#       AddToLog $gaSet(fail)
-#       return -1
-#     }
-#     RLSound::Play information
-#     set txt "Verify on PS $PS that RED led lights"
-#     set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "LED Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     
-#     RLSound::Play information
-#     set txt "Remove PS $PS"
-#     set res [DialogBox -type "OK Cancel" -icon /images/question -title "LED Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "PS_ID Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     set ret [Send $com "show environment\r" chassis]
-#     if {$ret!=0} {return $ret}
-#     if {$PS==1} {
-#       regexp {1\s+[AD]C\s+(\w+\s\w+)\s} $buffer - val
-#     } elseif {$PS==2} {
-#       regexp {2\s+[AD]C\s+(\w+\s\w+)\s} $buffer - val
-#     }
-#     
-#     puts "val:<$val>"
-#     if {$val!="Not exist"} {
-#       set gaSet(fail) "PS $PS $val. Expected \"Not exist\""
-#       AddToLog $gaSet(fail)
-#       return -1
-#     }
-#     
-#     RLSound::Play information
-#     set txt "Verify on PS $PS that led no lights"
-#     set res [DialogBox -type "OK Fail" -icon /images/question -title "LED Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "LED Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     
-#     RLSound::Play information
-#     set txt "Assemble PS $PS"
-#     set res [DialogBox -type "OK Cancel" -icon /images/question -title "LED Test" -message $txt]
-#     update
-#     if {$res!="OK"} {
-#       set gaSet(fail) "PS_ID Test failed"
-#       return -1
-#     } else {
-#       set ret 0
-#     }
-#     Power $PS on
-#     after 2000
-#   }
  
   return $ret
 }
@@ -1173,9 +1089,9 @@ proc DateTime_Test {} {
 # ***************************************************************************
 # DataTransmissionSetup
 # ***************************************************************************
-proc DataTransmissionSetup {} {
+proc DataTransmissionSetup {mode} {
   global gaSet buffer
-  
+  puts "\n[MyTime] DataTransmissionSetup $mode"
   set com $gaSet(comDut)
   Send $com \x1F\r\r -2I 3
   set ret [Login]
@@ -1206,10 +1122,21 @@ proc DataTransmissionSetup {} {
     }
     if {$ret!=0} {return $ret}          
   } else {
-    set cf $gaSet([set b]CF) 
-    set cfTxt "$b"
+    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+      if {$mode=="loop"} {
+        set cf $gaSet(Half19_loopCF) 
+        set cfTxt "Half19_loop"
+      } else {
+        set cf $gaSet(Half19_4portsCF) 
+        set cfTxt "Half19_4ports"
+      }
+    } else {
+      set cf $gaSet([set b]CF) 
+      set cfTxt "$b"
+    }
     set ret [DownloadConfFile $cf $cfTxt 1]
     if {$ret!=0} {return $ret} 
+    
   } 
     
   return $ret
@@ -1592,6 +1519,7 @@ proc ReadBootVersion {} {
     return -1
   } else {
     set gaSet(uutBootVers) $value
+    AddToPairLog $gaSet(pair) "Boot version: $value"
     puts "gaSet(uutBootVers):$gaSet(uutBootVers)"
     set ret 0
   }
@@ -2658,7 +2586,7 @@ proc MacSwIDTest {} {
 # ***************************************************************************
 proc ForceMode {b mode ports} {
   global gaSet buffer
-  Status "Force Mode $mode $ports"
+  Status "ForceMode $b $mode \"$ports\""
   set ret [Login]
   if {$ret!=0} {
     #set ret [Login]
@@ -2676,7 +2604,7 @@ proc ForceMode {b mode ports} {
   if {$ret!=0} {return $ret}
   
   ## 13/07/2016 13:42:51 6 -> 8
-  for {set port 1} {$port <= $ports} {incr port} {
+  foreach port $ports {
     set gaSet(fail) "Force port $port to mode \'$mode\' fail"
     set ret [Send $com "forced-combo-mode $port $mode\r" "test"]
     if {$ret!=0} {return $ret}
@@ -2687,6 +2615,7 @@ proc ForceMode {b mode ports} {
   }
   return $ret
 }
+
 # ***************************************************************************
 # ReadEthPortStatus
 # ***************************************************************************
@@ -2891,8 +2820,6 @@ proc ReadCPLD {} {
   }
   set gaSet(fail) "Logon fail"
   set com $gaSet(comDut)
-#  Send $com "exit all\r" stam 0.25 
-#  Send $com "logon\r" stam 0.25 
   set ret [LogonDebug $com]
   if {$ret!=0} {return $ret}
   Status "Read CPLD"
@@ -2906,6 +2833,7 @@ proc ReadCPLD {} {
   set res [regexp {0xC0100000\s+(\d+)\s} $buffer - value]
   if {$res==0} {return -1}
   puts "\nReadCPLD value:<$value> gaSet(cpld):<$gaSet(cpld)>\n"; update
+  AddToPairLog $gaSet(pair) "CPLD: $value"
   if {$value!=$gaSet(cpld)} {
     set gaSet(fail) "CPLD is \'$value\'. Should be \'$gaSet(cpld)\'"  
     return -1
@@ -4388,3 +4316,82 @@ proc CheckUserDefaultFilePerf {} {
   }
   return $ret
 }
+
+# ***************************************************************************
+# License
+# ***************************************************************************
+proc License {mode} {
+  global gaSet buffer
+  set com $gaSet(comDut)
+  Status "License $mode"
+  set ret [Login]
+  if {$ret!=0} {
+    #set ret [Login]
+    if {$ret!=0} {return $ret}
+  }
+  set gaSet(fail) "Config License $mode fail"
+  Send $com "exit all\r" stam 0.25 
+  set ret [Send $com "admin\r" ">admin"]
+  if {$ret != 0} {return $ret}
+  set ret [Send $com "license\r" ">license"]
+  if {$ret != 0} {return $ret}
+  set ret [Send $com "license-enable customer-control custom-config-b\r" ">license"]
+  if {$ret != 0} {return $ret}
+  
+  set gaSet(fail) "Check Part Number fail"
+  Send $com "exit all\r" stam 0.25 
+  set ret [Send $com "configure system\r" ">system"]
+  if {$ret != 0} {return $ret}
+  set ret [Send $com "show device-information\r" ">system"]
+  if {$ret != 0} {return $ret}
+  set res [regexp {Part Number[\s\:]+(\w+).+ww\)[\s\:]+([\d\-]+)\s} $buffer ma pn yw]
+  if {$res==0} {
+    set gaSet(fail) "Read PartNumber or Date Code fail"
+    return -1
+  }
+  AddToPairLog $gaSet(pair) "Part Number: $pn"
+  AddToPairLog $gaSet(pair) "Date Code: $yw"
+  
+  set pc_yw [clock format [clock seconds] -format "%Y-%W"]
+  
+  set pn_sb 5470920001
+  puts " pn:<$pn> pn_sb:<$pn_sb>"
+  if {$pn!=$pn_sb} {
+    set gaSet(fail) "Part Number is $pn. Should be $pn_sb"
+    return -1
+  }
+  
+  puts "yw:<$yw> pc_yw:<$pc_yw>"
+  if {$yw!=$pc_yw} {
+    set gaSet(fail) "Date Code $yw. Should be $pc_yw"
+    return -1
+  }
+  
+  return $ret
+}
+
+# ***************************************************************************
+# ActiveConnector
+# ***************************************************************************
+proc ActiveConnector {mode ports} {
+  global gaSet buffer
+  set com $gaSet(comDut)
+  Status "ActiveConnector $mode \"$ports\""
+  set ret [Login]
+  if {$ret!=0} {
+    #set ret [Login]
+    if {$ret!=0} {return $ret}
+  }
+  set gaSet(fail) "ActiveConnector $mode fail"
+  foreach port $ports {
+    Send $com "exit all\r" stam 0.25 
+    Send $com "configure port\r" ">port"
+    Send $com "ethernet $port\r" "($port)"
+    set ret [Send $com "active-connector $mode\r" "($port)"]
+    if {$ret!=0} {
+      return $ret
+    }
+  }
+  
+  return $ret
+}  

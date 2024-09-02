@@ -115,19 +115,8 @@ proc RegBC {} {
       set barcode$la $barcode
       #puts "pairIndx:$pairIndx pair:$pair"
       Status "Registration the  MAC."
-#       
-#       set mr [file mtime $::RadAppsPath/MACReg.exe]
-#       set prevMr [clock scan "Wed Jan 22 23:20:40 2020"] ; # last working version, with 1 MAC
-#       if {$mr>$prevMr} {
-#         ## the newest MacReg
-#         set str "$::RadAppsPath/MACReg.exe /$mac / /$barcode /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE"
-#       } else {
-#         set str "$::RadAppsPath/MACReg.exe /$mac /$barcode /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE"
-#       }
-#       puts "mr:<[clock format $mr]> prevMr:<[clock format $prevMr]> \n str<$str>"
       set str "$::RadAppsPath/MACReg_2Mac_2IMEI.exe /$mac / /$barcode /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE"
       set res$la [string trim [catch {eval exec $str} retVal$la]]
-      #set res$la [string trim [catch {exec c://RADapps/MACReg.exe /$mac /$barcode /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE /DISABLE} retVal$la]]
       puts "mac:$mac barcode:$barcode res$la:<[set res$la]> retVal$la:<[set retVal$la]>"
       update
       AddToPairLog $gaSet(pair) "MAC:$mac IDbarcode:$barcode"
@@ -143,7 +132,7 @@ proc RegBC {} {
     if {$ret!="0"} {
       break
     }
-#     AddToLog "mac:$mac Barcode-1 - $barcode1"
+
     
     if ![file exists c://logs//macHistory.txt] {
       set id [open c://logs//macHistory.txt w]

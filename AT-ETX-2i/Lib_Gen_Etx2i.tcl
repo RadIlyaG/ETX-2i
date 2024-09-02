@@ -161,7 +161,7 @@ proc SaveUutInit {fil} {
   if [info exists gaSet(DutInitName)] {
     puts $id "set gaSet(DutInitName) \"$gaSet(DutInitName)\""
   }
-  foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR DNFV Default Half19} {
+  foreach indx {Boot SW 19V 19 M DGasp ExtClk RTR DNFV Default Half19  Half19_loop Half19_4ports} {
     if ![info exists gaSet([set indx]CF)] {
       set gaSet([set indx]CF) ??
     }
@@ -1044,7 +1044,7 @@ proc GetMountPorts {{dut ""}} {
 # ***************************************************************************
 proc DownloadConfFile {cf cfTxt save} {
   global gaSet  buffer
-  puts "[MyTime] DownloadConfFile $cf $cfTxt $save"
+  puts "\n[MyTime] DownloadConfFile $cf $cfTxt $save"
   set com $gaSet(comDut)
   if ![file exists $cf] {
     set gaSet(fail) "The $cfTxt configuration file ($cf) doesn't exist"

@@ -245,7 +245,7 @@ proc GUI {} {
   .menubar.tterminal entryconfigure 0 -label "UUT: COM $gaSet(comDut)"
   .menubar.tterminal entryconfigure 2 -label "GEN: COM $gaSet(comGen1)"
   
-#    RLStatus::Show -msg atp
+  RLStatus::Show -msg atp
 #   RLStatus::Show -msg fti
    set gaSet(entDUT) ""
   focus -force $gaGui(entDUT)
@@ -280,6 +280,7 @@ proc About {} {
 #***************************************************************************
 proc ButRun {} {
   global gaSet gaGui glTests gRelayState
+  Ramzor green on
   puts "\r[MyTime] ButRun"; update
   pack forget $gaGui(frFailStatus)
   Status ""
@@ -322,7 +323,9 @@ proc ButRun {} {
   set gRelayState red
   IPRelay-LoopRed
   
+  Ramzor red on
   set ret [GuiReadOperator]
+  Ramzor green on
   parray gaSet *arco*
   parray gaSet *rato*
   if {$ret!=0} {
@@ -354,7 +357,7 @@ proc ButRun {} {
       RLSound::Play fail
       set txt "Be aware!\r\rYou are about to perform the short test.\r\r\
       If you are not sure, click the GUI's \'Short Tests\'->\'Perform Full Test\'"
-      set res [DialogBox -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title ASMi53]
+      set res [DialogBoxRamzor -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title ASMi53]
       if {$res=="Abort"} {
         set ret -2
         set gaSet(fail) "Short test abort"
@@ -371,7 +374,7 @@ proc ButRun {} {
       RLSound::Play information
       set txt "Be aware!\r\rYou are about to perform tests in Debug mode.\r\r\
       If you are not sure, in the GUI's \'Tools\'->\'Release / Debug mode\' choose \"Release Mode\""
-      set res [DialogBox -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title "ETX-2i-10G"]
+      set res [DialogBoxRamzor -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title "ETX-2i-10G"]
       if {$res=="Abort"} {
         set ret -2
         set gaSet(fail) "Debug mode abort"
@@ -404,7 +407,7 @@ proc ButRun {} {
 #   source Lib_Put_RicEth_$gaSet(dutFam).tcl
 #   
   if {$ret==0} {
-    AddToPairLog $gaSet(pair) "$gaSet(operatorID) $gaSet(operator)"
+    AddToPairLog $gaSet(pair) " $gaSet(operatorID) $gaSet(operator)"
     
     IPRelay-Green
     Status ""
@@ -517,6 +520,10 @@ proc ButRun {} {
   if {$gaSet(eraseTitle)==1} {
     wm title . "$gaSet(pair) : "
   }
+  
+  set res [DialogBox -type "OK" -icon /images/info -title "Finish" -message "The test is done" ]
+  update
+  Ramzor all off
   
   update
 }
@@ -631,7 +638,7 @@ proc GuiInventory {} {
     #exec C:\\RLFiles\\Tools\\Btl\\failbeep.exe &
     RLSound::Play fail    
     set txt "Define the UUT first"
-    DialogBox -title "Wrong UUT" -message $txt -type OK -icon images/error
+    DialogBoxRamzor -title "Wrong UUT" -message $txt -type OK -icon images/error
     focus -force $gaGui(entDUT)
     return -1
   }
@@ -644,7 +651,7 @@ proc GuiInventory {} {
     if ![info exists gaSet($par)] {set gaSet($par) ??}
     set gaTmpSet($par) $gaSet($par)
   }
-  foreach indx {19V 19 M DGasp ExtClk RTR DNFV Boot SW Default Half19} { 
+  foreach indx {19V 19 M DGasp ExtClk RTR DNFV Boot SW Default Half19 Half19_loop Half19_4ports} { 
     if ![info exists gaSet([set indx]CF)] {set gaSet([set indx]CF) c:/aa}
     set gaTmpSet([set indx]CF)  $gaSet([set indx]CF)
   }
@@ -698,11 +705,12 @@ proc GuiInventory {} {
   
   pack [Separator $base.sep[incr inx] -orient horizontal] -fill x -padx 2 -pady 3
   
-  set txtWidth 30
+  set txtWidth 40
   if {$gaSet(dutBox)!="DNFV"} {
     ## no need configuration files for DNFV    
-    foreach indx {Boot SW 19V 19 M Half19 DGasp ExtClk RTR} {
-      if {$indx==$gaSet(dutBox) || $indx=="DGasp" || $indx=="ExtClk" || $indx=="RTR" || $indx=="Boot" || $indx=="SW"} {
+    foreach indx {Boot SW 19V 19 M Half19_loop Half19_4ports DGasp ExtClk RTR} {
+      if {$indx==$gaSet(dutBox) || $indx=="DGasp" || $indx=="ExtClk" || $indx=="RTR" || \
+        $indx=="Boot" || $indx=="SW" || $indx=="Half19_loop"  || $indx=="Half19_4ports"} {
         set fr [frame $base.fr$indx -bd 0 -relief groove]
           if {$indx=="Boot" || $indx=="SW"} {
             set txt "Browse to \'[set indx]\' bin file..."
@@ -871,7 +879,7 @@ proc Quit {} {
 #***************************************************************************
 proc CaptureConsole {} {
   console eval { 
-    set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M"]
+    set ti [clock format [clock seconds] -format  "%Y.%m.%d_%H.%M.%S"]
     if ![file exists c:/temp] {
       file mkdir c:/temp
       after 1000
