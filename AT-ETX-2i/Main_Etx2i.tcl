@@ -17,26 +17,25 @@ proc BuildTests {} {
     if {$gaSet(performDownloadSteps)} {
       lappend lTestNames BootDownload SetDownload Pages SoftwareDownload ; # Set_DateTime Test_DateTime
     }
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if $gaSet(dtag) {
       ## no DDR in DT
     } else {
       lappend lTestNames DDR_single
     }
     lappend lTestNames SetToDefault PS_ID 
     
-    # from 2020.09.17 USB port did not checked
-    #lappend USBportTest
     lappend lTestNames FansTemperature DyingGaspConf DyingGaspTest
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    lappend lTestNames DataTransmissionConf DataTransmissionUTP 
+    if $gaSet(dtag) {
       lappend lTestNames DataTransmissionConfLoop DataTransmissionLoop
     }
-    lappend lTestNames DataTransmissionConf DataTransmissionUTP DataTransmissionSFP
+    lappend lTestNames DataTransmissionSFP
 
-    if {$p=="P" || $gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if {$p=="P" || $gaSet(dtag)} {
       lappend lTestNames ExtClk 
     }   
 
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if $gaSet(dtag) {
       ## no DDR in DT
     } else {
       lappend lTestNames DDR_multi
@@ -277,6 +276,7 @@ proc DyingGaspTest {run} {
 proc DyingGaspTest_1 {run} {
   global gaSet  buffer bu
   Power all on
+
 #   set gRelayState red
 #   IPRelay-LoopRed
 #   SendEmail "ETX-2I" "Manual Test"
@@ -291,10 +291,23 @@ proc DyingGaspTest_1 {run} {
 #   } else {
 #     set ret 0
 #   }
-#   
+#  
+
+  if {$gaSet(dtag) && $gaSet(manSfp)} {
+    RLSound::Play information
+    set txt "Remove the SFPs"
+    set res [DialogBox -type "OK Cancel" -icon /images/question -title "Dying Gasp Test" -message $txt]
+    update
+    if {$res!="OK"} {
+      return -2
+    } else {
+      set ret 0
+    }
+  } 
+  
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
   MuxMngIO ioToPc
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set forceRJ45port "0/2"
     set DgInbandPort "0/2"    
     set ret [ActiveConnector rj45 $forceRJ45port]
@@ -309,8 +322,20 @@ proc DyingGaspTest_1 {run} {
   set ret [ReadEthPortStatus $DgInbandPort]
   if {$ret=="-1" || $ret=="-2"} {return $ret}
   if {$ret!="RJ45"} {
-    set gaSet(fail) "The $ret in port $DgInbandPort is active instead of RJ45"
-    return -1
+    if {$gaSet(dtag) && $gaSet(manSfp)} {
+      RLSound::Play information
+      set txt "Remove the SFPs"
+      set res [DialogBox -type "OK Cancel" -icon /images/question -title "Dying Gasp Test" -message $txt]
+      update
+      if {$res!="OK"} {
+        return -2
+      } else {
+        set ret 0
+      }
+    } else {
+      set gaSet(fail) "The $ret in port $DgInbandPort is active instead of RJ45"
+      return -1
+    }
   }
  
   set ret [SpeedEthPort $DgInbandPort 100]
@@ -466,7 +491,7 @@ proc DataTransmissionUTP {run} {
   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
   
   
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set ports [list 0/2 0/3 0/4 0/5]
     set ret [ActiveConnector rj45 $ports]
   } else {
@@ -487,7 +512,7 @@ proc DataTransmissionUTP {run} {
     set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
   } else {
     set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if $gaSet(dtag) {
       set portsL [list 0/2 0/3 0/4 0/5]
     }
   }
@@ -495,8 +520,20 @@ proc DataTransmissionUTP {run} {
     set ret [ReadEthPortStatus $port]
     if {$ret=="-1" || $ret=="-2"} {return $ret}
     if {$ret!="RJ45"} {
-      set gaSet(fail) "The $ret in port $port is active instead of RJ45"
-      return -1
+      if {$gaSet(dtag) && $gaSet(manSfp)} {
+        RLSound::Play information
+        set txt "Remove the SFPs"
+        set res [DialogBox -type "OK Cancel" -icon /images/question -title "DataTransmissionUTP Test" -message $txt]
+        update
+        if {$res!="OK"} {
+          return -2
+        } else {
+          set ret 0
+        }
+      } else {
+        set gaSet(fail) "The $ret in port $port is active instead of RJ45"
+        return -1
+      }
     }
   }
     
@@ -505,7 +542,7 @@ proc DataTransmissionUTP {run} {
     set stream 8
   } else {
     set packRate 1200000
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if $gaSet(dtag) {
       set packRate 1000000
     }
     set stream 1
@@ -564,8 +601,20 @@ proc DataTransmissionSFP {run} {
       set ret [ReadEthPortStatus $port]
       if {$ret=="-1" || $ret=="-2"} {return $ret}
       if {$ret!="SFP"} {
-        set gaSet(fail) "The $ret in port $port is active instead of SFP"
-        return -1
+        if {$gaSet(dtag) && $gaSet(manSfp)} {
+          RLSound::Play information
+          set txt "Insert the SFPs"
+          set res [DialogBox -type "OK Cancel" -icon /images/question -title "DataTransmissionUTP Test" -message $txt]
+          update
+          if {$res!="OK"} {
+            return -2
+          } else {
+            set ret 0
+          }
+        } else {
+          set gaSet(fail) "The $ret in port $port is active instead of SFP"
+          return -1
+        }
       }
     }
   }
@@ -578,7 +627,7 @@ proc DataTransmissionSFP {run} {
     set stream 8
   } else {
     set packRate 1200000
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if $gaSet(dtag) {
       set packRate 1000000
     }
     set stream 1
@@ -623,6 +672,19 @@ proc DataTransmissionLoop {run} {
     Power all off
     after 1000
     Power all on 
+    
+    if {$gaSet(dtag) && $gaSet(manSfp)} {
+      RLSound::Play information
+      set txt "Insert the SFPs"
+      set res [DialogBox -type "OK Cancel" -icon /images/question -title "DataTransmissionLoop Test" -message $txt]
+      update
+      if {$res!="OK"} {
+        return -2
+      } else {
+        set ret 0
+      }
+    }
+    
     set ret [Login]
     if {$ret!=0} {return $ret}
     set ret [Wait "Wait for ETX up" 30]
@@ -637,8 +699,20 @@ proc DataTransmissionLoop {run} {
       set ret [ReadEthPortStatus $port]
       if {$ret=="-1" || $ret=="-2"} {return $ret}
       if {$ret!="SFP"} {
-        set gaSet(fail) "The $ret in port $port is active instead of SFP"
-        return -1
+        if {$gaSet(dtag) && $gaSet(manSfp)} {
+          RLSound::Play information
+          set txt "Insert the SFPs"
+          set res [DialogBox -type "OK Cancel" -icon /images/question -title "DataTransmissionLoop Test" -message $txt]
+          update
+          if {$res!="OK"} {
+            return -2
+          } else {
+            set ret 0
+          }
+        } else {
+          set gaSet(fail) "The $ret in port $port is active instead of SFP"
+          return -1
+        }
       }
     }
   }
@@ -825,7 +899,7 @@ proc Leds {run} {
   
   set txt ""
   RLSound::Play information
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set tstAlm ON
     set p1 0/2
     set p2 0/5
@@ -978,7 +1052,7 @@ proc Leds {run} {
   
   set res [regexp {\.[AD]{1,2}C\.} $gaSet(DutInitName)]
   puts "Leds $gaSet(DutInitName) res:<$res>"
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set res 0
   }
   if {$res==0} {
@@ -1224,7 +1298,7 @@ proc RtrData {run} {
   set id $gaSet(idGen1) 
   RLEtxGen::GenConfig $id -updGen all -packRate 20000
   
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set da1 [ReadPortMac 0/2]
   } else {
     set da1 [ReadPortMac 0/1]
@@ -1233,7 +1307,7 @@ proc RtrData {run} {
   if {$da1=="-1" || $da1=="-2"} {
     return $da1
   }
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set da2 [ReadPortMac 0/5]
   } else {
     set da2 [ReadPortMac 0/2]

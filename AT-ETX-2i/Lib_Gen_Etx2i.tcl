@@ -741,11 +741,19 @@ proc UpdateAppsHelpText {} {
 proc RetriveDutFam {{dutInitName ""}} {
   global gaSet 
   set gaSet(dutFam) NA 
-  set gaSet(dutBox) NA 
+  set gaSet(dutBox) NA
   if {$dutInitName==""} {
     set dutInitName $gaSet(DutInitName)
   }
   puts "RetriveDutFam $dutInitName"
+  
+  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    set gaSet(dtag) 1
+    set gaSet(manSfp) 1
+  } else {
+    set gaSet(dtag) 0
+    set gaSet(manSfp) 0
+  }
   if {[string match *.19.* $dutInitName]==1 || [string match *.19M.* $dutInitName]==1} {
     set gaSet(dutFam) 19.0.0.0.0
   } elseif {[string match *.19V.* $dutInitName]==1} {

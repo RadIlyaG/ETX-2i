@@ -586,7 +586,7 @@ proc PS_IDTest {} {
   set ret [ReadCPLD]
   if {$ret!=0} {return $ret}
   
-  if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+  if $gaSet(dtag) {
     set ret [License enable]
     if {$ret!=0} {return $ret}
   }
@@ -1122,7 +1122,7 @@ proc DataTransmissionSetup {mode} {
     }
     if {$ret!=0} {return $ret}          
   } else {
-    if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
+    if $gaSet(dtag) {
       if {$mode=="loop"} {
         set cf $gaSet(Half19_loopCF) 
         set cfTxt "Half19_loop"
