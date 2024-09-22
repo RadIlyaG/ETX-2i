@@ -26,10 +26,11 @@ proc BuildTests {} {
     
     lappend lTestNames FansTemperature DyingGaspConf DyingGaspTest
     lappend lTestNames DataTransmissionConf DataTransmissionUTP 
+    lappend lTestNames DataTransmissionSFP
     if $gaSet(dtag) {
       lappend lTestNames DataTransmissionConfLoop DataTransmissionLoop
     }
-    lappend lTestNames DataTransmissionSFP
+    
 
     if {$p=="P" || $gaSet(dtag)} {
       lappend lTestNames ExtClk 
@@ -345,6 +346,7 @@ proc DyingGaspTest_1 {run} {
     set ret [ReadEthPortStatus $DgInbandPort]
     #set res [regexp {Operational Status[\s\:]+(\w+)\s} $buffer m opStat]
     set res [regexp {Operational Status[\s\:]+(\w+)\s} $bu m opStat]
+    AddToPairLog $gaSet(pair) "Port $DgInbandPort Operational Status $opStat"
     if {$res==0} {
       set gaSet(fail) "Read Op State of eth $DgInbandPort fail"
       return -1
@@ -473,8 +475,10 @@ proc DataTransmissionConfLoop {run} {
 
   puts "[MyTime] RLEtxGen::PortsConfig -admStatus down"; update
   RLEtxGen::PortsConfig $gaSet(idGen1) -updGen all -admStatus down
-  after 2000
-      
+  #after 2000
+  
+  set ret [FactDefault std]
+  if {$ret!=0} {return $ret}     
   set ret [DataTransmissionSetup loop]
   if {$ret!=0} {return $ret}
   
@@ -568,7 +572,7 @@ proc DataTransmissionUTP {run} {
 proc DataTransmissionSFP {run} {
   global gaSet gRelayState
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
-  if {$b!="19"} {
+  if {$b!="19" && $b!="Half19"} {
     if {$b=="19V"} {
       set ret [DnfvCross off]
       if {$ret!=0} {return $ret}
@@ -583,7 +587,7 @@ proc DataTransmissionSFP {run} {
     if {$ret!=0} {return $ret}
     set ret [Wait "Wait for ETX up" 60]
     if {$ret!=0} {return $ret}
-  } elseif {$b=="19"} {
+  } elseif {$b=="19" || $b=="Half19"} {
     Power all off
     after 1000
     Power all on 
@@ -596,7 +600,12 @@ proc DataTransmissionSFP {run} {
       set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
     } else {
       set portsL [list 0/1 0/2 0/3 0/4 0/5 0/6 0/7 0/8]
+      if $gaSet(dtag) {
+        set portsL [list 0/2 0/3 0/4 0/5]
+      }
     }
+    puts "\n DataTransmissionSFP portsL:<$portsL>"
+    
     foreach port $portsL {
       set ret [ReadEthPortStatus $port]
       if {$ret=="-1" || $ret=="-2"} {return $ret}
@@ -653,7 +662,7 @@ proc DataTransmissionSFP {run} {
 proc DataTransmissionLoop {run} {
   global gaSet gRelayState
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
-  if {$b!="19"} {
+  if {$b!="19" && $b!="Half19"} {
     if {$b=="19V"} {
       set ret [DnfvCross off]
       if {$ret!=0} {return $ret}
@@ -668,10 +677,12 @@ proc DataTransmissionLoop {run} {
     if {$ret!=0} {return $ret}
     set ret [Wait "Wait for ETX up" 60]
     if {$ret!=0} {return $ret}
-  } elseif {$b=="19"} {
-    Power all off
-    after 1000
-    Power all on 
+  } elseif {$b=="19" || $b=="Half19"} {
+  
+    ## 08:07 19/09/2024 Since i perform SetToDefault at DataTransmissionConfLoop - no need reset
+    #Power all off
+    #after 1000
+    #Power all on 
     
     if {$gaSet(dtag) && $gaSet(manSfp)} {
       RLSound::Play information
@@ -694,7 +705,11 @@ proc DataTransmissionLoop {run} {
       set portsL [list 0/1 0/2 0/3 0/4 1/1 1/2]
     } else {
       set portsL [list 0/1 0/2 0/3 0/4 0/5 0/6 0/7 0/8]
+      if $gaSet(dtag) {
+        set portsL [list 0/2 0/3 0/4 0/5]
+      }
     }
+    puts "\n DataTransmissionLoop portsL:<$portsL>"
     foreach port $portsL {
       set ret [ReadEthPortStatus $port]
       if {$ret=="-1" || $ret=="-2"} {return $ret}

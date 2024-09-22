@@ -86,7 +86,9 @@ proc GUI {} {
   		  {command "E-mail Test" gaGui(ToolAdd) {} {} -command {TestEmail}}       
       }
       }  
-             
+      {separator}
+      {radiobutton "Remove SFP"  init {} {} -value 1 -variable gaSet(manSfp)}
+      {radiobutton "Don't remove SFP" init {} {} -value 0 -variable gaSet(manSfp)}        
     }
     "&Terminal" terminal tterminal 0  {
       {command "UUT" "" "" {} -command {OpenTeraTerm gaSet(comDut)}}

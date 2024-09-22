@@ -133,7 +133,7 @@ proc ::RLWS::Get_SwVersions {id} {
   set url "http://ws-proxy01.rad.com:8081/ExtAppsWS/Proxy/Select"
   set query [::http::formatQuery queryName "qry.get.sw.for_idNumber_2" db inventory params $barc]
   append url "/?[set query]"
-  set resLst [::RLWS::_operateWS $url $query "SW Versions for $id"]
+  set resLst [::RLWS::_operateWS $url $query "SW Version"]
   foreach {res resTxt} $resLst {}
   if {[llength $resTxt] == 0} {
     foreach {pa_ret pa_resTxt} [::RLWS::Ping_Services] {
@@ -142,7 +142,7 @@ proc ::RLWS::Get_SwVersions {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No SW Versions for $id. UUT problem"]
+      return [list -1 "Fail to get SW Version"]
     }
   }
   return $resLst 
@@ -167,7 +167,7 @@ proc ::RLWS::Get_OI4Barcode {id} {
   set url "$::RLWS:::HttpsURL/rest/"
   set param OperationItem4Barcode\?barcode=[set barc]\&traceabilityID=null
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "DBR Assembly Name for $id"]
+  set resLst [::RLWS::_operateWS $url "NA" "DBR Assembly Name"]
   foreach {res resTxt} $resLst {}
   if {$res!=0} {
     return $resLst 
@@ -179,7 +179,7 @@ proc ::RLWS::Get_OI4Barcode {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No DBR Assembly Name for $id. UUT problem"]
+      return [list -1 "Fail to get DBR Assembly Name"]
     }
   }
   set value [lindex $resTxt [expr {1 + [lsearch $resTxt "item"]} ] ]
@@ -205,7 +205,7 @@ proc ::RLWS::Get_CSL {id} {
   set url "$::RLWS:::HttpsURL/rest/"
   set param CSLByBarcode\?barcode=[set barc]\&traceabilityID=null
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "CSL for $id"]
+  set resLst [::RLWS::_operateWS $url "NA" "CSL"]
   foreach {res resTxt} $resLst {}
   if {$res!=0} {
     return $resLst 
@@ -217,7 +217,7 @@ proc ::RLWS::Get_CSL {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No CSL for $id. UUT problem"]
+      return [list -1 "Fail to get CSL"]
     }    
   }
   set value [lindex $resTxt [expr {1 + [lsearch $resTxt "CSL"]} ] ]
@@ -242,7 +242,7 @@ proc ::RLWS::Get_MrktName {id} {
   set url "$::RLWS:::HttpsURL/rest/"
   set param MKTItem4Barcode\?barcode=[set barc]\&traceabilityID=null
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "Marketing Name for $id"]
+  set resLst [::RLWS::_operateWS $url "NA" "Marketing Name"]
   foreach {res resTxt} $resLst {}
   if {$res!=0} {
     return $resLst 
@@ -254,7 +254,7 @@ proc ::RLWS::Get_MrktName {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No Marketing Name for $id. UUT problem"]
+      return [list -1 "Fail to get Marketing Name"]
     }     
   }
   set value [lindex $resTxt [expr {1 + [lsearch $resTxt "MKT Item"]} ] ]
@@ -279,7 +279,7 @@ proc ::RLWS::Get_MrktNumber {dbr_assm} {
   set url "$::RLWS:::HttpsURL/rest/"
   set param MKTPDNByDBRAssembly\?dbrAssembly=$dbr_assm
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "Marketing Number for $dbr_assm"]
+  set resLst [::RLWS::_operateWS $url "NA" "Marketing Number"]
   foreach {res resTxt} $resLst {}
   if {$res!=0} {
     return $resLst 
@@ -291,7 +291,7 @@ proc ::RLWS::Get_MrktNumber {dbr_assm} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No Marketing Number for $dbr_assm. UUT problem"]
+      return [list -1 "Fail to get Marketing Number"]
     } 
   }
   set value [lindex $resTxt [expr {1 + [lsearch $resTxt "MKT_PDN"]} ] ]
@@ -314,7 +314,7 @@ proc ::RLWS::Disconnect_Barcode {id {mac ""}} {
   set url "$::RLWS:::HttpsURL/rest/"
   set param DisconnectBarcode\?mac=[set mac]&idNumber=[set barc]
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "Disconnect Barcode $id"]
+  set resLst [::RLWS::_operateWS $url "NA" "Disconnect Barcode"]
   return $resLst
 } 
 
@@ -335,12 +335,11 @@ proc ::RLWS::Get_PcbTraceIdData {id var_list} {
   set procNameArgs [info level 0]
   set procName [lindex $procNameArgs 0]
   if $::RLWS::debugWS {puts "\n$procNameArgs"}
-  #if $::RLWS::debugWS {puts "\nGet_PcbTraceIdData $id"}
   
   set url "$::RLWS:::HttpsURL/rest/"
   set param PCBTraceabilityIDData\?barcode=null\&traceabilityID=$id
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "Pcb TraceId Data for $id"]
+  set resLst [::RLWS::_operateWS $url "NA" "Pcb TraceId Data"]
   foreach {res resTxt} $resLst {}
   if {$res!=0} {
     return $resLst 
@@ -352,7 +351,7 @@ proc ::RLWS::Get_PcbTraceIdData {id var_list} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No Pcb TraceId Data for $id. UUT problem"]
+      return [list -1 "Fail to get Pcb TraceId Data"]
     } 
   }
   foreach var $var_list {
@@ -384,28 +383,28 @@ proc ::RLWS::CheckMac {id mac} {
   set li [::RLWS::_chk_connection_to_mac $mac]
   foreach {res connected_id} $li {}
   if {$res!=0} {
-    return $connected_id
+    return [list $res $connected_id]
   }
   set short_id [format %.11s $id]
   set li [::RLWS::_chk_connection_to_id $short_id]
   foreach {res connected_mac} $li {}
   if {$res!=0} {
-    return $connected_mac
+    return [list $res $connected_mac]
   }
   if $::RLWS::debugWS {puts "CheckMac input_id:<$short_id>, to $mac connected id: <$connected_id>"}
   if $::RLWS::debugWS {puts "CheckMac input_mac:<$mac>, to $short_id connected mac: <$connected_mac>"}
   
   if {$connected_id == $short_id && $connected_mac == $mac} {
-    return [list 0 "$id->$mac"]
+    return [list 0 "$id connected $mac"]
   }
   if {$connected_id == "" && $connected_mac == ""} {
-    return [list 0 "NC, NC"]
+    return [list 0 "$mac & $id aren't connected at all"]
   }
   if {$connected_id != "" && $connected_id != $short_id} {
-    return [list 1 "$mac is already connected to $connected_id"]
+    return [list 1 "$mac already connected to $connected_id"]
   }
   if {$connected_mac != "" && $connected_mac != $mac} {
-    return [list 1 "$id is already connected to $connected_mac"]
+    return [list 1 "$id already connected to $connected_mac"]
   }
   return "-100 None"
 }
@@ -413,7 +412,8 @@ proc ::RLWS::CheckMac {id mac} {
 proc ::RLWS::_chk_connection_to_mac {{mac "112233445566"}} {
   set url "$RLWS::MRserverUR/q001_mac_extant_chack"
   set query [::http::formatQuery macID $mac]
-  foreach {res connected_id} [::RLWS::_operateWS $url $query "Connection to $mac"] {}
+  foreach {res connected_id} [::RLWS::_operateWS $url $query "Connection"] {}
+  if {$res!=0} {return [list $res $connected_id]}
   set connected_id [lindex $connected_id [expr 1+ [lsearch $connected_id "id_number"] ] ]
   return [list $res $connected_id]
 }
@@ -421,7 +421,8 @@ proc ::RLWS::_chk_connection_to_mac {{mac "112233445566"}} {
 proc ::RLWS::_chk_connection_to_id {{id "EA100448957"}} {
   set url "$RLWS::MRserverUR/q003_idnumber_extant_check"
   set query [::http::formatQuery idNumber $id]
-  foreach {res connected_mac} [::RLWS::_operateWS $url $query "Connection to $id"] {}
+  foreach {res connected_mac} [::RLWS::_operateWS $url $query "Connection"] {}
+  if {$res!=0} {return [list $res $connected_id]}
   set connected_mac [lindex $connected_mac [expr 1+ [lsearch $connected_mac "mac"] ] ]
   return [list $res $connected_mac]
 }
@@ -486,7 +487,7 @@ proc ::RLWS::_operateWS {url {query "NA"} paramName} {
     } else {
       set res_val -1
       #set res_txt "Network problem "; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
-      set res_txt "Fail to get $paramName. UUT problem"; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
+      set res_txt "Fail to get $paramName"; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
     }
   }
   upvar #0 $tok state
@@ -527,7 +528,7 @@ proc ::RLWS::_operateWS {url {query "NA"} paramName} {
           # puts $ucf_content
           catch {close $fid}
           if $problem {
-            return [list "-1" "Servers problem"] ; #"Fail to get UserConfigurationFile"
+            return [list "-1" "Server problem"] ; #"Fail to get UserConfigurationFile"
           }
         }
         return [list 0 $size]  
@@ -582,7 +583,7 @@ proc ::RLWS::Get_ConfigurationFile {dbr_assm localUCF} {
   set url "$::RLWS:::HttpsURL/configDownload/ConfigFile?"
   set param "dbrAssembly=[set dbr_assm]"
   append url $param
-  set resLst [::RLWS::_operateWS $url file_$localUCF "Get Configuration File for $dbr_assm"]
+  set resLst [::RLWS::_operateWS $url file_$localUCF "Get Configuration File"]
   return $resLst
 }
 # ***************************************************************************
@@ -628,14 +629,14 @@ proc ::RLWS::Get_Mac {qty} {
   #if $::RLWS::debugWS {puts "\nGet_Mac $qty"}
   set url "$RLWS::MRserverUR/sp001_mac_address_alloc"
   set query [::http::formatQuery p_mode 0 p_trace_id 0 p_serial 0 p_idnumber_id 0 p_alloc_qty $qty p_file_version 1]
-  set resLst [::RLWS::_operateWS $url $query "Get $qty MACs"]
+  set resLst [::RLWS::_operateWS $url $query "MACs"]
   set Error_indx [lsearch [lindex $resLst 1] "Error"]
   set Error_Val [lindex [lindex $resLst 1] [expr {1+$Error_indx}]]
   #puts "$resLst $Error_indx $Error_Val"
   if {[lindex $resLst 0]==0 && $Error_Val==0} {
     return [list 0 [lindex [lindex $resLst 1] end]]
   } else {
-    return [list -1 "[lindex $resLst 1]. Servers problem"]
+    return [list -1 "Server problem. [lindex $resLst 1]"]
   }  
 }
 
@@ -650,7 +651,6 @@ proc ::RLWS::Get_Pages {id {traceId ""} {macs_qty 10} } {
   set procNameArgs [info level 0]
   set procName [lindex $procNameArgs 0]
   if $::RLWS::debugWS {puts "\n$procNameArgs"}
-  #if $::RLWS::debugWS {puts "\nGet_Pages $id $traceId $macs_qty"}
   
   set headers [list "content-type" "text/xml" "SOAPAction" ""]
   set data "<soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
@@ -693,7 +693,7 @@ proc ::RLWS::Get_Pages {id {traceId ""} {macs_qty 10} } {
   
   if [string match {*502 Proxy Error*} $b1] {
     set res_val -1
-    set res_txt "Fail to get Pages for $id $traceId. Servers problem"
+    set res_txt "Server problem. Fail to get Pages"
     return [list $res_val $res_txt]
   }
   if ![string match {*ns1:get_Data_4_DallasResponse*} $b1] {
@@ -705,7 +705,7 @@ proc ::RLWS::Get_Pages {id {traceId ""} {macs_qty 10} } {
     } else {
       set res_val -1
       #set res_txt "Network problem "; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
-      set res_txt "Fail to get Pages for $id $traceId. UUT problem"; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
+      set res_txt "Fail to get Pages"; #"Fail to get $paramName"; # "http::status: <$st> http::ncode: <$nc>"
       #set res_txt "Fail to get Pages for $id $traceId.."
       return [list $res_val $res_txt]
     }
@@ -723,7 +723,7 @@ proc ::RLWS::Get_Pages {id {traceId ""} {macs_qty 10} } {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      set res_txt "Fail to get Pages for $id $traceId : $err. UUT problem"
+      set res_txt "Fail to get Pages"
       return [list -1 $res_txt]
     }
   }
@@ -763,42 +763,45 @@ proc ::RLWS::Ping_Network {} {
   set result ""
   set Webservices03_indx [lsearch $status "Webservices03"]
   set Webservices03_status [lindex $status [expr {$Webservices03_indx + 1}]]
-  append result "Webservices03: $Webservices03_status\n"
+  append result "Webservices03: $Webservices03_status, "
   
   set WsMacPages_indx [lsearch $status "ws-mac-pages"]
   set WsMacPages_status [lindex $status [expr {$WsMacPages_indx + 1}]]
-  append result "ws-mac-pages: $WsMacPages_status\n"
+  append result "ws-mac-pages: $WsMacPages_status, "
   
   if ![regexp {webservices03 DB Connection ([\sA-Za-z]+) webservices03} $status ma val] {
     return [list -1 "Fail to read Webservices03 DB Connection"]
   } else {
     set Webservices03_DB_status $val
   }
-  append result "webservices03 DB Connection: $Webservices03_DB_status\n"
+  append result "webservices03 DB Connection: $Webservices03_DB_status, "
   
   if ![regexp {webservices03 Agile Connection ([\sA-Za-z]+) ws-mac-pages} $status ma val] {
     return [list -1 "Fail to read Webservices03 Agile Connection"]
   } else {
     set Webservices03_Agile_status $val
   }
-  append result "webservices03 Agile Connection: $Webservices03_Agile_status\n"
+  append result "webservices03 Agile Connection: $Webservices03_Agile_status, "
   
   if ![regexp {ws-mac-pages DB Connection ([\sA-Za-z]+) ws-mac-pages} $status ma val] {
     return [list -1 "Fail to read WsMacPages DB Connection"]
   } else {
     set WsMacPages_DB_status $val
   }
-  append result "ws-mac-pages DB Connection: $WsMacPages_DB_status\n"
+  append result "ws-mac-pages DB Connection: $WsMacPages_DB_status, "
   
   if ![regexp {ws-mac-pages Agile Connection ([\sA-Za-z]+)} $status ma val] {
     return [list -1 "Fail to read  WsMacPages Agile Connection"]
   } else {
     set  WsMacPages_Agile_status $val
   }
-  append result "ws-mac-pages Agile Connection: $WsMacPages_DB_status\n"
+  append result "ws-mac-pages Agile Connection: $WsMacPages_DB_status, "
+  
+  set result [string trimright $result]
+  set result [string trimright $result ,]
   
   if {[regexp -all {OkK} $resTxt]==6} {
-    return [list 0 "Servers OK"]
+    return [list 0 "Server OK"]
   } else {
     if ![file exists c:/temp] {
       file mkdir c:/temp
@@ -807,7 +810,7 @@ proc ::RLWS::Ping_Network {} {
     set id [open $fi w+]
     puts $id $resTxt
     close $id
-    return [list -1 [list "Servers problem" $result $fi]]
+    return [list -1 [list "Server problem" $result $fi]]
   }  
 }
 
@@ -826,14 +829,18 @@ proc ::RLWS::Ping_Services {} {
       foreach {ret resTxt} [::RLWS::_pingToService $srv $db] {
         if $::RLWS::debugWS {puts "srv:<$srv> db:<$db> ret:<$ret> <$resTxt>"}
         incr res $ret
-        append result $resTxt\n
+        append result "${resTxt}, "
       }
     }
   }  
+  set result [string trimright $result]
+  set result [string trimright $result ,]
   if {$res==0} {
-    return [list 0 "Servers OK"]
+    return [list 0 "Server OK"]
   } else {
-    return [list -1 [list "Servers problem" $result]]
+    set rslt "Server problem. "
+    append rslt $result
+    return [list -1 $rslt]
   }  
 }
 # ***************************************************************************
@@ -884,10 +891,10 @@ proc ::RLWS::Ping_ServicesLocalNet {} {
     }
   }
   if {$res==0} {
-    return [list 0 "Servers OK"]
+    return [list 0 "Server OK"]
   } else {
-    #return [list $res [list "Servers problem" $result]]
-    return [list -1 [list "Servers problem" $result]]
+    #return [list $res [list "Server problem" $result]]
+    return [list -1 [list "Server problem" $result]]
   }
 }
 
@@ -933,7 +940,8 @@ proc ::RLWS::_eval_ping_srv_db {cmd server db} {
   
   set title "$server"
   if {$db!=""} {
-    append title " to $db Connection"
+    #  append title " to $db Connection"
+    append title " to $db"
   }
   if [string match {*OK*} $body] {
     return [list 0 "$title: OK"]
@@ -1123,7 +1131,7 @@ proc ::RLWS::Get_TraceId {id} {
   set url "$::RLWS:::HttpsURL/traceability/"
   set param TraceabilityByBarcode\?barcode=[set barc]
   append url $param
-  set resLst [::RLWS::_operateWS $url "NA" "Traceability for $id"]
+  set resLst [::RLWS::_operateWS $url "NA" "Traceability"]
   foreach {res resTxt} $resLst {}
   if {$res!=0} {
     return $resLst 
@@ -1136,7 +1144,7 @@ proc ::RLWS::Get_TraceId {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No Traceability for $id. UUT problem"]
+      return [list -1 "Fail to get Traceability"]
     } 
   }
   
@@ -1150,7 +1158,7 @@ proc ::RLWS::Get_TraceId {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No Traceability for $id. UUT problem"]
+      return [list -1 "Fail to get Traceability"]
     } 
   }
   
@@ -1164,7 +1172,7 @@ proc ::RLWS::Get_TraceId {id} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "No Traceability for $id. UUT problem"]
+      return [list -1 "Fail to get Traceability"]
     }
   }
   return [list $res $value] 

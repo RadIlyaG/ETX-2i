@@ -215,6 +215,8 @@ proc SaveInit {} {
   puts $id "set gaSet(DGTestLoopBreak) \"$gaSet(DGTestLoopBreak)\""
   puts $id "set gaSet(performDownloadSteps) \"$gaSet(performDownloadSteps)\""  
   
+  puts $id "set gaSet(manSfp) \"$gaSet(manSfp)\""
+  
   close $id
    
 }
@@ -749,10 +751,10 @@ proc RetriveDutFam {{dutInitName ""}} {
   
   if {$gaSet(DutFullName) == "ETX-2I_DT/H/8.5/AC/1SFP/4CMB/SYE/RTR"} {
     set gaSet(dtag) 1
-    set gaSet(manSfp) 1
+    ## done via GUI set gaSet(manSfp) 1
   } else {
     set gaSet(dtag) 0
-    set gaSet(manSfp) 0
+    ## done via GUI set gaSet(manSfp) 0
   }
   if {[string match *.19.* $dutInitName]==1 || [string match *.19M.* $dutInitName]==1} {
     set gaSet(dutFam) 19.0.0.0.0

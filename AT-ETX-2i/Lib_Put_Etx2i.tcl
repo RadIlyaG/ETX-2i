@@ -781,7 +781,7 @@ proc DyingGaspPerf {psOffOn psOff} {
     puts "\rFrameB---<$fram>---\r"; update
   }
 
-  set retLog [ReadLog dying_gasp]
+  set retLog 0 ; #[ReadLog dying_gasp]
   if {$retLog!=0} {
     set gaSet(fail) "No \"DyingGasp\" trap does not exist in log"
     return -1
@@ -2633,10 +2633,12 @@ proc ReadEthPortStatus {port} {
   Send $com "exit all\r" stam 0.25 
   set ret [Send $com "config port ethernet $port\r" ($port)]
   if {$ret!=0} {return $ret}
-  set ret [Send $com "show status\r" ($port)]
+  #set ret [Send $com "show status\r" ($port)]
+  set ret [Send $com "show status\r" "more."]
   set bu $buffer
-  if {$ret!=0} {
-    after 2000
+  #if {$ret!=0} {}
+  if {$ret==0} {
+    #after 2000
     set ret [Send $com "\r" ($port)]
     if {$ret!=0} {return $ret}   
     append bu $buffer
@@ -2645,6 +2647,7 @@ proc ReadEthPortStatus {port} {
   set res [regexp {([\w\d]+) Active} $bu - val]
   if {$res==0} {return -1}
   puts "ReadEthPortStatus val:<$val>"
+  AddToPairLog $gaSet(pair) "Port $port $val Active"
   return $val
 }
 # ***************************************************************************

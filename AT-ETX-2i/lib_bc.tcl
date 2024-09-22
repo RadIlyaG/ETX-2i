@@ -175,7 +175,7 @@ proc CheckBcOk {} {
       set uut ETX-2i
     } 
     SendEmail "$uut" "Read barcodes"
-    set ret [DialogBox -title "barcode" -text "Enter the ${uut}'s barcode" -ent1focus 1\
+    set ret [DialogBox -title "ID Number" -text "Enter the ${uut}'s barcode" -ent1focus 1\
         -type "Ok Cancel" -entQty 1 -entPerRow 1 -entLab DUT -icon /images/info]
     #-type "Ok Cancel Skip" 12/10/2020 09:36:59     
   	if {$ret == "Cancel" } {

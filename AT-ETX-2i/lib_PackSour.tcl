@@ -179,6 +179,7 @@ if {![info exists gaSet(performDownloadSteps)]} {
   set gaSet(performDownloadSteps) 1
 }
 
+
 set gaSet(relDebMode) Release
 set gaSet(cbTesterMode) "FTI"
 
@@ -186,6 +187,10 @@ set gaSet(cbTesterMode) "FTI"
 #   set gaSet(DGTestLoopBreak) 1
 # }
 #set gaSet(1.barcode1) CE100025622
+if {![info exists gaSet(manSfp)]} {
+  set gaSet(manSfp) 0
+}
+
 
 GUI
 #ToggleTestMode
