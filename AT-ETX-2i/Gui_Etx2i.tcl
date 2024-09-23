@@ -87,8 +87,7 @@ proc GUI {} {
       }
       }  
       {separator}
-      {radiobutton "Remove SFP"  init {} {} -value 1 -variable gaSet(manSfp)}
-      {radiobutton "Don't remove SFP" init {} {} -value 0 -variable gaSet(manSfp)}        
+      {radiobutton "Remove SFP"  manSfp {} {} -value 1 -variable gaSet(manSfp)}            
     }
     "&Terminal" terminal tterminal 0  {
       {command "UUT" "" "" {} -command {OpenTeraTerm gaSet(comDut)}}
@@ -107,6 +106,8 @@ proc GUI {} {
     {separator}    
       {radiobutton "Read Mac in UploadAppl" {} {} {} -command {} -variable gaSet(readMacUploadAppl) -value 1}
       {radiobutton "Don't read Mac in UploadAppl" {} {} {} -command {} -variable gaSet(readMacUploadAppl) -value 0}
+      
+    {radiobutton "Don't remove SFP" manSfp {} {} -value 0 -variable gaSet(manSfp)}  
   }
    #{command "SW init" init {} {} -command {GuiSwInit}}	
 #    {radiobutton "Stop on Failure" {} "" {} -value 1 -variable gaSet(stopFail)}

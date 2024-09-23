@@ -187,9 +187,8 @@ set gaSet(cbTesterMode) "FTI"
 #   set gaSet(DGTestLoopBreak) 1
 # }
 #set gaSet(1.barcode1) CE100025622
-if {![info exists gaSet(manSfp)]} {
-  set gaSet(manSfp) 0
-}
+
+set gaSet(manSfp) 1
 
 
 GUI
