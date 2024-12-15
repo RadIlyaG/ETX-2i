@@ -627,7 +627,10 @@ proc GetDbrName {} {
   #file mkdir [regsub -all / $res .]
   
   if {[file exists uutInits/$gaSet(DutInitName)]} {
-    source uutInits/$gaSet(DutInitName)  
+    source uutInits/$gaSet(DutInitName)
+    if ![info exists gaSet(DefaultCF)] {
+      set gaSet(DefaultCF) ""
+    }       
     if {$gaSet(DefaultCF)=="" || $gaSet(DefaultCF)=="c:/aa"} {  
       set ::chbUcf 0 ; ## for GuiInventory
     } else {
