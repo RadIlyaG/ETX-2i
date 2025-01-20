@@ -1,9 +1,9 @@
-set gaGui(xy) +322+699
-set gaSet(entDUT) "ETX-2I_FT/ACHP/19V"
-set gaSet(DutInitName) "ETX-2I_FT.ACHP.19V.tcl"
+set gaGui(xy) +506+363
+set gaSet(entDUT) "ETX-2I/ACR/19"
+set gaSet(DutInitName) "ETX-2I.ACR.19.tcl"
 set gaSet(performShortTest) "0"
 set gaSet(eraseTitle) "0"
-set gaSet(ddrMultyQty) "5"
+set gaSet(ddrMultyQty) "4"
 set gaSet(DGTestQty) "3"
 set gaSet(DGTestLoopBreak) "1"
 set gaSet(performDownloadSteps) "1"

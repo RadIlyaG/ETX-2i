@@ -28,6 +28,8 @@ proc GUI {} {
       }
       }
       {separator}
+      {command "Inform about new files" {} "Exit" {} -command {InformAboutNewFiles}}
+      {separator}
       {command "History" History "" {} \
          -command {
            set command [list {*}[auto_execok start] {}]

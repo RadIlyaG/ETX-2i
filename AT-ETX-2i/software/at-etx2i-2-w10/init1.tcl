@@ -1,4 +1,4 @@
-set gaGui(xy) +287+246
+set gaGui(xy) +268+58
 set gaSet(entDUT) "ETX-2I_FT/ACHP/19V"
 set gaSet(DutInitName) "ETX-2I_FT.ACHP.19V.tcl"
 set gaSet(performShortTest) "0"

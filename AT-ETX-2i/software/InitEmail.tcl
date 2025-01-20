@@ -1,5 +1,5 @@
 set gaSet(Email.1) "yulia_s@rad.com"
-set gaSet(chbutEmail.1) "1"
+set gaSet(chbutEmail.1) "0"
 set gaSet(Email.2) ""
 set gaSet(chbutEmail.2) "0"
 set gaSet(Email.3) ""

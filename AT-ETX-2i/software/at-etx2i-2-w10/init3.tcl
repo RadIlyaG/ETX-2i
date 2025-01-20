@@ -1,6 +1,6 @@
-set gaGui(xy) +168+315
-set gaSet(entDUT) "ETX-2I/H/AC/19/PTP/RTR"
-set gaSet(DutInitName) "ETX-2I.H.AC.19.PTP.RTR.tcl"
+set gaGui(xy) +121+486
+set gaSet(entDUT) "ETX-2I_FT/ACHP/19V"
+set gaSet(DutInitName) "ETX-2I_FT.ACHP.19V.tcl"
 set gaSet(performShortTest) "0"
 set gaSet(eraseTitle) "0"
 set gaSet(ddrMultyQty) "5"
