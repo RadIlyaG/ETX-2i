@@ -901,7 +901,7 @@ proc Leds {run} {
   
 
   ## DyingGasp for pings
-  set cf C:/AT-ETX-2i/ConfFiles/Dying\ Gasp.txt
+  set cf C:/AT-ETX-2i/software/ConfFiles/Dying\ Gasp.txt
   set cfTxt "Dying Gasp"
   set ret [DownloadConfFile $cf $cfTxt 1]  
   if {$ret!=0} {return $ret}
