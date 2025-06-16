@@ -4355,7 +4355,8 @@ proc License {mode} {
   AddToPairLog $gaSet(pair) "Part Number: $pn"
   AddToPairLog $gaSet(pair) "Date Code: $yw"
   
-  set pc_yw [clock format [clock seconds] -format "%Y-%W"]
+  # 15:22 16/06/2025 set pc_yw [clock format [clock seconds] -format "%Y-%V"]
+  set pc_yw [clock format [clock seconds] -format "%Y-%U"]
   
   set pn_sb 5470920001
   puts " pn:<$pn> pn_sb:<$pn_sb>"
