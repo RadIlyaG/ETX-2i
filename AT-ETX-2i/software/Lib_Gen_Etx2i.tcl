@@ -1574,3 +1574,40 @@ proc GuiMuxMngIO {mngMode syncEmode} {
   RLUsbMmux::Close $gaSet(idMuxMngIO) 
   RLEH::Close
 }
+# ***************************************************************************
+# Power
+# Power [all|1|2] [0|OFF|1|ON]
+# ***************************************************************************
+proc Power_usb_relay {ps state} {
+  global gaSet gaGui 
+  if {$state==1} {
+    set state ON
+  } elseif {$state==0} {
+    set state OFF
+  }  
+  puts "\n[MyTime] Power_usb_relay $ps $state"
+#   RLSound::Play information
+#   DialogBox -type OK -message "Turn $ps $state"
+#   return 0
+  set ret 0
+  switch -exact -- $ps {
+    1   {set rlyL 1}
+    2   {set rlyL 2}
+    all {set rlyL "ALL"}
+  } 
+  foreach rly $rlyL {
+    puts "Relay:$rly State:$state"
+    for {set try 1} {$try<=10} {incr try} {
+      if [catch {exec ./hidusb-relay-cmd.exe $state $rly} res] {
+        after 2000
+        set ret -1
+      }
+      puts "try:$try rly:$rly state:$state res:$res"; update
+      if {$res==""} {
+        set ret 0
+        break
+      }
+    }
+  }
+  return 0
+}

@@ -4354,20 +4354,36 @@ proc License {mode} {
   }
   AddToPairLog $gaSet(pair) "Part Number: $pn"
   AddToPairLog $gaSet(pair) "Date Code: $yw"
-  
-  # 15:22 16/06/2025 set pc_yw [clock format [clock seconds] -format "%Y-%V"]
-  set pc_yw [clock format [clock seconds] -format "%Y-%U"]
-  
-  set pn_sb 5470920001
+    
+  foreach {b r p d ps} [split $gaSet(dutFam) .] {}
+  if {$ps=="AC"} {
+    set pn_sb 5470920001
+  } elseif {$ps=="DC"} {
+    set pn_sb 5470930001
+  } else {
+    set pn_sb NA
+  }
   puts " pn:<$pn> pn_sb:<$pn_sb>"
   if {$pn!=$pn_sb} {
     set gaSet(fail) "Part Number is $pn. Should be $pn_sb"
     return -1
   }
+    
+  set fti_max_dist 12
+  set sec_in_week 604800.0
   
-  puts "yw:<$yw> pc_yw:<$pc_yw>"
-  if {$yw!=$pc_yw} {
-    set gaSet(fail) "Date Code $yw. Should be $pc_yw"
+  # 15:22 16/06/2025 set pc_yw [clock format [clock seconds] -format "%Y-%V"]
+  set pc_yw [clock format [clock seconds] -format "%Y-%U"]
+  set pc_yw_sec [clock scan $pc_yw -format {%Y-%U}]
+  
+  set uut_yw_sec [clock scan $yw -format {%Y-%U}]
+  
+  
+  set dist [format %.4s  [expr {(abs($pc_yw_sec - $uut_yw_sec) / $sec_in_week)}]]
+  puts "yw:<$yw> pc_yw:<$pc_yw> uut_yw_sec:<$uut_yw_sec> pc_yw_sec:<$pc_yw_sec> "
+  puts "fti_max_dist:<$fti_max_dist> dist:<$dist>"
+  if {$dist>=$fti_max_dist} {
+    set gaSet(fail) "Date Code $yw. Distance $dist. Should be less $fti_max_dist"
     return -1
   }
   

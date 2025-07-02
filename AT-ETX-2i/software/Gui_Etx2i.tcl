@@ -257,7 +257,7 @@ proc GUI {} {
   .menubar.tterminal entryconfigure 2 -label "GEN: COM $gaSet(comGen1)"
   
   RLStatus::Show -msg atp
-  RLStatus::Show -msg fti
+  #RLStatus::Show -msg fti
   set gaSet(entDUT) ""
   focus -force $gaGui(entDUT)
   
