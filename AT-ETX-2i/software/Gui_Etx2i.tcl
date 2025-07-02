@@ -13,6 +13,9 @@ proc GUI {} {
   if {$gaSet(eraseTitle)==1} {
     wm title . "$gaSet(pair) : "
   }
+  if {![info exists ::repairMode]} {
+    set ::repairMode 0
+  }
   
   wm protocol . WM_DELETE_WINDOW {Quit}
   wm geometry . $gaGui(xy)
@@ -27,6 +30,9 @@ proc GUI {} {
         {command "Find Console" console "Find Console" {} -command {GuiFindConsole}}          
       }
       }
+      {separator}
+      {command "Edit NoTrace file" init "" {} -command {exec notepad ./NoTrace.txt &}}
+      {command "Add DBR Name to NoTrace file" init "" {} -command {AddDbrNameToNoTraceFile}}
       {separator}
       {command "Inform about new files" {} "Exit" {} -command {InformAboutNewFiles}}
       {separator}
@@ -251,8 +257,8 @@ proc GUI {} {
   .menubar.tterminal entryconfigure 2 -label "GEN: COM $gaSet(comGen1)"
   
   RLStatus::Show -msg atp
-#   RLStatus::Show -msg fti
-   set gaSet(entDUT) ""
+  RLStatus::Show -msg fti
+  set gaSet(entDUT) ""
   focus -force $gaGui(entDUT)
   
   if ![info exists ::RadAppsPath] {
@@ -298,6 +304,8 @@ proc ButRun {} {
   console eval {.console delete 1.0 end}
   console eval {set ::tk::console::maxLines 100000}
   LoadBootErrorsFile
+  LoadNoTraceFile
+  
 #   if {$gaSet(pair)!="1"} {
 #     $gaGui(labPairPerf1) configure -bg $gaSet(toTestClr)
 #   }
@@ -346,49 +354,54 @@ proc ButRun {} {
     }
   
   
-    if {![file exists uutInits/$gaSet(DutInitName)]} {
-      set txt "Init file for \'$gaSet(DutFullName)\' is absent"
-      Status  $txt
-      set gaSet(fail) $txt
-      set gaSet(curTest) $gaSet(startFrom)
-      set ret -1
-  #     AddToLog $gaSet(fail)
-      AddToPairLog $gaSet(pair) $gaSet(fail)
-    }
-  
-  
-    if {$gaSet(performShortTest)=="1"} {
-      #RLSound::Play beep
-      RLSound::Play fail
-      set txt "Be aware!\r\rYou are about to perform the short test.\r\r\
-      If you are not sure, click the GUI's \'Short Tests\'->\'Perform Full Test\'"
-      set res [DialogBoxRamzor -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title ASMi53]
-      if {$res=="Abort"} {
-        set ret -2
-        set gaSet(fail) "Short test abort"
-        Status "Short test abort"
-  #       AddToLog $gaSet(fail)
+    if {$ret==0} {
+      if {![file exists uutInits/$gaSet(DutInitName)]} {
+        set txt "Init file for \'$gaSet(DutFullName)\' is absent"
+        Status  $txt
+        set gaSet(fail) $txt
+        set gaSet(curTest) $gaSet(startFrom)
+        set ret -1
+    #     AddToLog $gaSet(fail)
         AddToPairLog $gaSet(pair) $gaSet(fail)
-      } else {
-        set ret 0
       }
     }
   
-    if {$gaSet(relDebMode)=="Debug"} {
-      #RLSound::Play beep
-      RLSound::Play information
-      set txt "Be aware!\r\rYou are about to perform tests in Debug mode.\r\r\
-      If you are not sure, in the GUI's \'Tools\'->\'Release / Debug mode\' choose \"Release Mode\""
-      set res [DialogBoxRamzor -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title "ETX-2i-10G"]
-      if {$res=="Abort"} {
-        set ret -2
-        set gaSet(fail) "Debug mode abort"
-        Status "Debug mode abort"
-  #       AddToLog $gaSet(fail)
-        AddToPairLog $gaSet(pair) $gaSet(fail)
-      } else {
-        AddToPairLog $gaSet(pair) "\n!!! DEBUG MODE !!!\n"
-        set ret 0
+    if {$ret==0} {
+      if {$gaSet(performShortTest)=="1" && $::repairMode==0} {
+        #RLSound::Play beep
+        RLSound::Play fail
+        set txt "Be aware!\r\rYou are about to perform the short test.\r\r\
+        If you are not sure, click the GUI's \'Short Tests\'->\'Perform Full Test\'"
+        set res [DialogBoxRamzor -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title ASMi53]
+        if {$res=="Abort"} {
+          set ret -2
+          set gaSet(fail) "Short test abort"
+          Status "Short test abort"
+    #       AddToLog $gaSet(fail)
+          AddToPairLog $gaSet(pair) $gaSet(fail)
+        } else {
+          set ret 0
+        }
+      }
+    }
+  
+    if {$ret==0} {
+      if {$gaSet(relDebMode)=="Debug" && $::repairMode==0} {
+        #RLSound::Play beep
+        RLSound::Play information
+        set txt "Be aware!\r\rYou are about to perform tests in Debug mode.\r\r\
+        If you are not sure, in the GUI's \'Tools\'->\'Release / Debug mode\' choose \"Release Mode\""
+        set res [DialogBoxRamzor -icon images/info -type "Continue Abort" -text $txt -default 1 -aspect 2000 -title "ETX-2i-10G"]
+        if {$res=="Abort"} {
+          set ret -2
+          set gaSet(fail) "Debug mode abort"
+          Status "Debug mode abort"
+    #       AddToLog $gaSet(fail)
+          AddToPairLog $gaSet(pair) $gaSet(fail)
+        } else {
+          AddToPairLog $gaSet(pair) "\n!!! DEBUG MODE !!!\n"
+          set ret 0
+        }
       }
     }
   
@@ -412,7 +425,9 @@ proc ButRun {} {
 #   source Lib_Put_RicEth_$gaSet(dutFam).tcl
 #   
   if {$ret==0} {
-    AddToPairLog $gaSet(pair) " $gaSet(operatorID) $gaSet(operator)"
+    if !$::repairMode {
+       AddToPairLog $gaSet(pair) " $gaSet(operatorID) $gaSet(operator)"
+    }
     
     IPRelay-Green
     Status ""
@@ -1311,9 +1326,14 @@ proc GuiReadOperator {} {
   catch {array unset gaDBox} 
   catch {array unset gaGetOpDBox} 
   #set ret [GetOperator -i pause.gif -ti "title Get Operator" -te "text Operator's Name "]
-  set sn [clock seconds]
-  set ret [GetOperator -i images/oper32.ico -gn $::RadAppsPath]
-  incr ::wastedSecs [expr {[clock seconds]-$sn}]
+  
+  if {$::repairMode} {
+    set ret "RepairMode"
+  } else {
+    set sn [clock seconds]
+    set ret [GetOperator -i images/oper32.ico -gn $::RadAppsPath]
+    incr ::wastedSecs [expr {[clock seconds]-$sn}]
+  }
   if {$ret=="-1"} {
     set gaSet(fail) "No Operator Name"
     return $ret

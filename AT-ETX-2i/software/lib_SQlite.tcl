@@ -37,6 +37,7 @@ proc SQliteClose {} {
 # ***************************************************************************
 proc SQliteAddLine {} {
   global gaSet
+  if $::repairMode {return 0}
   
   set barcode $gaSet(1.barcode1)
   puts "[MyTime] SQliteAddLine $barcode"
@@ -71,29 +72,45 @@ proc SQliteAddLine {} {
     set operator 0
   }
   
-  set poNumber ""
-  set traceID ""
-  foreach {ret resTxt} [::RLWS::Get_TraceId $barcode] {}
-  if {[info exists gaSet(1.traceId)] && $gaSet(1.traceId)!=""} {
+  # set poNumber ""
+  # set traceID ""
+  # foreach {ret resTxt} [::RLWS::Get_TraceId $barcode] {}
+  # if {[info exists gaSet(1.traceId)] && $gaSet(1.traceId)!=""} {
+    # set traceID $gaSet(1.traceId)
+  # } elseif {$ret==0} {
+    # set traceID $resTxt
+  # }
+  # if {$traceID!=""} {
+    # foreach {ret resTxt} [::RLWS::Get_PcbTraceIdData $traceID  {"po number"}] {}
+    # if {$ret!="0"} {
+      # set poNumber ""
+    # } else {
+      # set poNumber $resTxt
+    # }  
+  # }
+  
+  if {$gaSet(1.traceId)==""} {    
+    set poNumber ""
+    set traceID ""
+  } else {
     set traceID $gaSet(1.traceId)
-  } elseif {$ret==0} {
-    set traceID $resTxt
-  }
-  if {$traceID!=""} {
-    foreach {ret resTxt} [::RLWS::Get_PcbTraceIdData $traceID  {"po number"}] {}
+    foreach {ret resTxt} [::RLWS::Get_PcbTraceIdData $gaSet(1.traceId) {"po number"}] {}
     if {$ret!="0"} {
       set poNumber ""
     } else {
       set poNumber $resTxt
-    }  
-  }
+    }
+  } 
 
   for {set tr 1} {$tr <= 6} {incr tr} {
     #if [catch {UpdateDB $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator} res] {}
-    if [catch {::RLWS::UpdateDB2 $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator $traceID $poNumber "" "" ""} res] {
-
-      set res "Try${tr}_fail.$res"
-      puts "[MyTime] Web DataBase is not updated. Try:<$tr>. Res:<$res>" ; update
+    #if [catch {::RLWS::UpdateDB2 $barcode $uut $hostDescription $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator $traceID $poNumber "" "" ""} res] {}
+    foreach {ret resTxt} [::RLWS::UpdateDB2  $barcode $uut $hostDescription \
+            $date $tim-$gaSet(ButRunTime) $status $failTestsList $failReason $operator\
+            $traceId $poNumber [info host] "" ""] {}
+    if {$ret!=0} {
+      set res "Try${tr}_fail.$resTxt"
+      puts "[MyTime] Web DataBase is not updated. Try:<$tr>. Res:<$resTxt>" ; update
       after [expr {int(rand()*3000+60)}] 
     } else {
       puts "[MyTime] Web DataBase is updated well!"

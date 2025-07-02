@@ -108,6 +108,8 @@ proc RetriveUsbChannel {} {
 # ***************************************************************************
 proc OpenPio {} {
   global gaSet descript
+  if {$::repairMode} {return 0}
+  
   set channel [RetriveUsbChannel]
   if {$channel=="-1"} {
     return -1
@@ -128,6 +130,8 @@ proc OpenPio {} {
 # ***************************************************************************
 proc ClosePio {} {
   global gaSet
+  if {$::repairMode} {return 0}
+  
   set ret 0
   foreach rb "1 2" {
 	  catch {RLUsbPio::Close $gaSet(idPwr$rb)}
@@ -409,6 +413,12 @@ proc MyWaitFor {com expected testEach timeout} {
 proc Power {ps state} {
   global gaSet gaGui 
   puts "[MyTime] Power $ps $state"
+  
+  if {$::repairMode} {
+    set ret [Power_usb_relay $ps $state]
+    return $ret
+  }
+  
 #   RLSound::Play information
 #   DialogBox -type OK -message "Turn $ps $state"
 #   return 0
@@ -448,10 +458,16 @@ proc GuiPower {n state} {
   RLEH::Open
   RLUsbPio::GetUsbChannels descript
   switch -exact -- $n {
-    1.1 - 2.1 - 3.1 - 4.1 {set portL [list 1]}
-    1.2 - 2.2 - 3.2 - 4.2 {set portL [list 2]}      
-    1 - 2 - 3 - 4 - all  {set portL [list 1 2]}  
-  }        
+    1.1 - 2.1 - 3.1 - 4.1 {set portL [list 1]; set ps 1}
+    1.2 - 2.2 - 3.2 - 4.2 {set portL [list 2]; set ps 2}      
+    1 - 2 - 3 - 4 - all  {set portL [list 1 2]; set ps all}  
+  }  
+  
+  if {$::repairMode} {
+    set ret [Power_usb_relay $ps $state]
+    return $ret
+  } 
+  
   set channel [RetriveUsbChannel]
   if {$channel!="-1"} {
     foreach rb $portL {
@@ -1268,11 +1284,14 @@ proc SwMulti {ch} {
   RLUsbMmux::Close $gaSet(idMulti) 
   RLEH::Close
 }
+
 # ***************************************************************************
 # MuxMngIO
 # ***************************************************************************
 proc MuxMngIO {mode} {
   global gaSet
+  if {$::repairMode} {return 0}
+  
   puts "MuxMngIO $mode"
   RLUsbMmux::AllNC $gaSet(idMuxMngIO)
   after 1000
@@ -1507,4 +1526,51 @@ proc CheckFolder4NewFiles {path secNow} {
       }
     }
   }
+}
+
+# ***************************************************************************
+# LoadNoTraceFile
+# ***************************************************************************
+proc LoadNoTraceFile {} {
+  global gaSet
+  set gaSet(noTraceL) [list] 
+  if ![file exists ./NoTrace.txt]  {
+    return {}
+  }
+  
+  set id [open ./NoTrace.txt r]
+    while {[gets $id line] >= 0} {
+      set line [string trim $line]
+      if {[string length $line] != 0} {
+        lappend gaSet(noTraceL) $line
+      }
+    }
+
+  close $id
+}
+
+# ***************************************************************************
+# AddDbrNameToNoTraceFile
+# ***************************************************************************
+proc AddDbrNameToNoTraceFile {} {
+  global gaSet
+  set dbrName $gaSet(DutFullName)
+  set id [open ./NoTrace.txt a]
+    puts $id $dbrName
+  close $id
+}
+
+# ***************************************************************************
+# GuiMuxMngIO
+# ***************************************************************************
+proc GuiMuxMngIO {mngMode syncEmode} {
+  global gaSet descript
+  if {$::repairMode} {return 0}
+  
+  set channel [RetriveUsbChannel]   
+  RLEH::Open
+  set gaSet(idMuxMngIO) [RLUsbMmux::Open 1 $channel]
+  MuxMngIO $mngMode $syncEmode
+  RLUsbMmux::Close $gaSet(idMuxMngIO) 
+  RLEH::Close
 }

@@ -162,9 +162,9 @@ proc RegBC {} {
 # ***************************************************************************
 # CheckBcOk
 # ***************************************************************************
-proc CheckBcOk {} {
+proc CheckBcOk {readTrace} {
 	global  gaDBox  gaSet
-  puts "CheckBcOk" ;  update
+  puts "CheckBcOk $readTrace" ;  update
   set pair 1
   if {$gaSet(useExistBarcode)==0} {
     RLSound::Play information
@@ -175,23 +175,57 @@ proc CheckBcOk {} {
       set uut ETX-2i
     } 
     SendEmail "$uut" "Read barcodes"
+    
+    if {$readTrace==0} {
+      set entQty 1
+      set entLab {"ID"}
+      set radButQty 0
+    } else {
+      set entQty 2
+      set entLab {"ID" "Traceability"}
+      set radButQty 2
+    }
+    
+    set radButInvoke 1
+    if {[lsearch $gaSet(noTraceL) $gaSet(DutFullName)]!="-1"} {
+      set radButInvoke 2
+    }
+    
+    # set ret [DialogBox -title "ID Number" -text "Enter the ${uut}'s barcode" -ent1focus 1\
+        # -type "Ok Cancel" -entQty 1 -entPerRow 1 -entLab DUT -icon /images/info]
+        
     set ret [DialogBox -title "ID Number" -text "Enter the ${uut}'s barcode" -ent1focus 1\
-        -type "Ok Cancel" -entQty 1 -entPerRow 1 -entLab DUT -icon /images/info]
-    #-type "Ok Cancel Skip" 12/10/2020 09:36:59     
+        -type "Ok Cancel" -entQty $entQty -entPerRow 1 -entLab $entLab -icon /images/uut48.ico\
+        -RadButQty $radButQty -RadButPerRow 1 -RadButLab {"Use Traceability" "Don't use Traceability"} \
+        -RadButVar "useTraceId useTraceId" -RadButVal "1 0" -RadButInvoke $radButInvoke \
+        ] 
+    puts "[MyTime] Ret of DialogReadBarcode:<$ret>"  
+    
   	if {$ret == "Cancel" } {
   	  return -2 
   	} elseif {$ret=="Ok"} {
-      foreach {ent1} [lsort -dict [array names gaDBox entVal*]] {
+      foreach {ent1 ent2} [lsort -dict [array names gaDBox entVal*]] {
         set barcode1 [string toupper $gaDBox($ent1)]  
-        #set barcode2 [string toupper $gaDBox($ent2)]  
-        puts "barcode1 == $barcode1"
-#   	    if ![string is xdigit $barcode1] {
-#           set gaSet(fail) "The barcode should be an HEX number"
-#           return -1
-#         }
+        if {$readTrace==0} {        
+          set traceId1 "" 
+          set useTraceId 0
+        } else {
+          set traceId1 [string toupper $gaDBox($ent2)]  
+          set useTraceId $gaDBox(useTraceId)
+        }
+        puts "barcode1:<$barcode1> traceId1:<$traceId1> useTraceId:<$useTraceId>"
+
+        if ![string is digit [string range $barcode1 2 end] ] {
+          set gaSet(fail) "Wrong barcode: $barcode1"
+          return -3
+        }
         if {[string length $barcode1]!=11 && [string length $barcode1]!=12} {
           set gaSet(fail) "The barcode should be 11 or 12 HEX digits"
-          return -1
+          return -3
+        }
+        if {$useTraceId && ![string is digit $traceId1]} {
+          set gaSet(fail) "Wrong TraceID: $traceId1"
+          return -3
         }
       }
       return 0  	
@@ -214,12 +248,27 @@ proc CheckBcOk {} {
 proc ReadBarcode {} {
   global gaSet gaDBox
   puts "ReadBarcode" ;  update
+  
+  if {[lsearch $gaSet(noTraceL) $gaSet(DutFullName)]!="-1"} {
+    set readTrace 0
+  } else {
+    if {[string match *BootDownload* $gaSet(startFrom)] || [string match *SetDownload* $gaSet(startFrom)]|| [string match *Pages* $gaSet(startFrom)]} {
+      ## Read TraceID in tests BootDownload, SetDownload and Pages only
+      set readTrace 1
+    } else {
+      set readTrace 0
+    }    
+  }
+  
   set ret -1
   while {$ret != "0" } {
-    set ret [CheckBcOk]
+    set ret [CheckBcOk $readTrace]
     Status $gaSet(fail)
     puts "CheckBcOk res:$ret "
     if { $ret == "-2" ||  $ret == "-1" } {
+      if ![info exists gaSet(logTime)] {
+        set gaSet(logTime) [clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]
+      }
       set gaSet(log.$gaSet(pair)) c:/logs/${gaSet(logTime)}.txt
       AddToPairLog $gaSet(pair) "$gaSet(DutFullName)"
       return $ret
@@ -230,15 +279,6 @@ proc ReadBarcode {} {
     foreach la {1} {
       set barcode [string toupper $gaDBox([set ent$la])]  
       set gaSet(1.barcode$la) $barcode
-      # set res [catch {exec $gaSet(javaLocation)/java.exe -jar $::RadAppsPath/checkmac.jar $barcode AABBCCFFEEDD} retChk]
-      # puts "CheckMac res:<$res> retChk:<$retChk>" ; update
-      # if {$res=="1" && $retChk=="0"} {
-        # puts "No Id-MAC link"
-        # set gaSet(1.barcode$la.IdMacLink) "noLink"
-      # } else {
-        # puts "Id-Mac link or error"
-        # set gaSet(1.barcode$la.IdMacLink) "link"
-      # }
       foreach {ret resTxt} [::RLWS::CheckMac $barcode AABBCCFFEEDD] {}
       puts "CheckMac $barcode ret:<$ret> resTxt:<$resTxt>" ; update
       if {$ret=="-1"} {
@@ -254,9 +294,30 @@ proc ReadBarcode {} {
       }
       set ret 0
     }
+    
+    if {$readTrace==0} {      
+      set traceId ""  
+      set gaSet(1.traceId) $traceId
+      set useTraceId 0
+      set gaSet(1.useTraceId) $useTraceId
+    } else {      
+      set traceId [string toupper $gaDBox($ent2)]  
+      set gaSet(1.traceId) $traceId
+      set useTraceId $gaDBox(useTraceId)
+      set gaSet(1.useTraceId) $useTraceId
+    }
+    
+    if ![info exists gaSet(logTime)] {
+      set gaSet(logTime) [clock format [clock seconds] -format  "%Y.%m.%d-%H.%M.%S"]
+    }
     set gaSet(log.$gaSet(pair)) c:/logs/${gaSet(logTime)}-$barcode.txt
     AddToPairLog $gaSet(pair) "$gaSet(DutFullName)"
     AddToPairLog $gaSet(pair) "UUT - $barcode"
+    if $useTraceId {
+      AddToPairLog $gaSet(pair) "Use TraceId - $traceId"
+    } else {
+      AddToPairLog $gaSet(pair) "No use TraceId"
+    }
   }    
   return $ret
 }

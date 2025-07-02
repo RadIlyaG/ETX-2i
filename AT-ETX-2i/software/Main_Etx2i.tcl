@@ -56,7 +56,11 @@ proc BuildTests {} {
       lappend lTestNames LoadDefaultConfiguration CheckUserDefaultFile
     }
       
-    lappend lTestNames Mac_BarCode
+    if {$::repairMode} {        
+      ## don't do it if repairMode 
+    } else {
+      lappend lTests Mac_BarCode 
+    }
     
   } elseif {$b=="DNFV"} {    
     if {$p=="I7"} {
@@ -1574,7 +1578,7 @@ proc Pages {run} {
   set ret [EntryBootMenu]
   if {$ret!=0} {return $ret}
   
-  set ret [GetPageFile $gaSet($::pair.barcode1)]
+  set ret [GetPageFile $gaSet($::pair.barcode1)  $gaSet($::pair.traceId)]
   if {$ret!=0} {return $ret}
   
   set ret [WritePages]

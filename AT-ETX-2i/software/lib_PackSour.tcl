@@ -11,6 +11,13 @@ if [file exists c:/TEMP_FOLDER] {
 source lib_DeleteOldApp.tcl
 DeleteOldApp
 
+set host_name  [info host]
+if {[string match *avraham-bi* $host_name] || [string match *david-ya* $host_name] || [string match *ofer-m-* $host_name]} {
+  set ::repairMode 1
+} else {
+  set ::repairMode 0
+}
+
 after 1000
 set ::RadAppsPath c:/RadApps
 
@@ -60,10 +67,14 @@ if 1 {
   set d2 [file normalize  C:/download]
   
   if {$gaSet(radNet)} {
-    set emailL {{yulia_s@rad.com} {} {}}
-  } else {
-    set emailL [list]
-  }
+      if {$::repairMode || [string match *ilya-g* [info host]]} {
+        set emailL [list]
+      } else {
+        set emailL {{yulia_s@rad.com} {} {} }
+      }  
+    } else {
+      set emailL [list]
+    }
   
   set ret [RLAutoSync::AutoSync "$s1 $d1 $s2 $d2" -noCheckFiles {init*.tcl skipped.txt  *.db} \
   -noCheckDirs {temp OLD old} -jarLocation $::RadAppsPath -javaLocation $gaSet(javaLocation) \

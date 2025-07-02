@@ -53,9 +53,9 @@ proc CRC {ldata} {
 # ***************************************************************************
 # GetPageFile
 # ***************************************************************************
-proc GetPageFile {barcode} {
+proc GetPageFile {barcode trac} {
   global gaGui gaSet gaGet res
-  puts "GetPageFile $barcode"
+  puts "GetPageFile $barcode $trac"
   #------------
   # demo:  
   # set gaSet(barcode) DE100147191
@@ -93,7 +93,10 @@ proc GetPageFile {barcode} {
   
   # ##file delete -force $fileName 
   
-  set trac ""
+  # set trac ""
+  if {$gaSet(1.useTraceId)==0} {
+    set trac ""
+  }
   foreach {ret resTxt} [::RLWS::Get_Pages $barcode $trac 1 ] {}
   if {$ret!=0} {
     set gaSet(fail) $resTxt
