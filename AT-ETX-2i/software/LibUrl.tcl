@@ -5,7 +5,7 @@ package require json
 ::http::register https 8445 [list tls::socket -tls1 1]
 package require md5
 
-package provide RLWS 1.7
+package provide RLWS 1.8
 
 namespace eval RLWS { 
 
@@ -45,7 +45,7 @@ proc ::RLWS::UpdateDB {barcode uutName hostDescription  date time status  failTe
 # ***************************************************************************
 # UpdateDB2
 # ***************************************************************************
-proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failTestsList failDescription dealtByServer traceID poNumber {data1 ""} {data2 ""} {data3 ""}} {
+proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failTestsList failDescription dealtByServer traceId poNumber {data1 ""} {data2 ""} {data3 ""}} {
   set dbPath "//prod-svm1/tds/Temp/SQLiteDB/"
   set dbName "JerAteStats.db" 
   if {$data1==""} {
@@ -55,11 +55,11 @@ proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failT
     set url_$f [::RLWS::_convertToUrl [set $f]]
   }
   if $::RLWS::debugWS {puts "UpdateDB2 <$barcode> <$uutName> <$hostDescription> <$date> <$time> <$status> <$failTestsList> <$failDescription> \
-  <$dealtByServer> <$traceID> <$poNumber> <$data1> <$data2> <$data3>"}
+  <$dealtByServer> <$traceId> <$poNumber> <$data1> <$data2> <$data3>"}
   set url "http://webservices03.rad.com:10211/ATE_WS/ws/tcc_rest/add_row2_with_db?barcode=$barcode&uutName=$url_uutName"
   append url "&hostDescription=$url_hostDescription&date=$date&time=$time&status=$status"
   append url "&failTestsList=$url_failTestsList&failDescription=$url_failDescription&dealtByServer=$url_dealtByServer"
-  append url "&dbPath=$dbPath&dbName=$dbName&traceID=$traceID&poNumber=$poNumber&data1=$url_data1&data2=$url_data2&data3=$url_data3" 
+  append url "&dbPath=$dbPath&dbName=$dbName&traceID=$traceId&poNumber=$poNumber&data1=$url_data1&data2=$url_data2&data3=$url_data3" 
   if $::RLWS::debugWS {puts "UpdateDB url:<$url>"}
 
   # set tok [::http::geturl $url -headers [list Authorization "Basic [base64::encode webservices:radexternal]"]]
@@ -331,13 +331,13 @@ proc ::RLWS::Disconnect_Barcode {id {mac ""}} {
 #   ::RLWS::Get_PcbTraceIdData 21181408 {pcb product} will return
 #       0 {SF-1V/PS.REV0.3I SF1P/PS12V/RG/PS3/TERNA/3PIN/R06}   
 # ***************************************************************************
-proc ::RLWS::Get_PcbTraceIdData {id var_list} {
+proc ::RLWS::Get_PcbTraceIdData {traceId var_list} {
   set procNameArgs [info level 0]
   set procName [lindex $procNameArgs 0]
   if $::RLWS::debugWS {puts "\n$procNameArgs"}
   
   set url "$::RLWS:::HttpsURL/rest/"
-  set param PCBTraceabilityIDData\?barcode=null\&traceabilityID=$id
+  set param PCBTraceabilityIDData\?barcode=null\&traceabilityID=$traceId
   append url $param
   set resLst [::RLWS::_operateWS $url "NA" "Pcb TraceId Data"]
   foreach {res resTxt} $resLst {}
@@ -1398,6 +1398,46 @@ proc ::RLWS::Update_DigitalSerialNumber {id serial} {
     return [list -1 $value] 
   }
 }
+
+# ***************************************************************************
+# ::RLWS::Get_OtherSide_TraceID
+#
+# Returns list of two values - result and resultText
+#   result may be -1 if WS fails,
+#                  0 if OK
+#   resultText - Trace ID from opposite side, if exists. 
+#                If not exist - resultText=="-1"
+#   ::RLWS::Get_OtherSide_TraceID 21651252 will return
+#       0 21651412
+#   ::RLWS::Get_OtherSide_TraceID 13885482 will return
+#       0 -1
+# ***************************************************************************
+proc ::RLWS::Get_OtherSide_TraceID {traceId} {
+  set procNameArgs [info level 0]
+  set procName [lindex $procNameArgs 0]
+  if $::RLWS::debugWS {puts "\n$procNameArgs"}
+  
+  set url "$::RLWS:::HttpsURL/traceability/"
+  set param TraceID_By_PCB\?traceID=$traceId
+  append url $param
+  set resLst [::RLWS::_operateWS $url "NA" "TraceID_By_PCB"]
+  foreach {res resTxt} $resLst {}
+  if {$res!=0} {
+    return $resLst 
+  }
+  if {[llength $resTxt] == 0} {
+    foreach {pa_ret pa_resTxt} [::RLWS::Ping_Services] {
+      if $::RLWS::debugWS {puts "pa_ret:<$pa_ret> <$pa_resTxt>"}
+    }
+    if {$pa_ret != 0} {
+      return [list $pa_ret $pa_resTxt]
+    } else {
+      return [list -1 "Fail to get CSL"]
+    }    
+  }
+  set value [lindex $resTxt [expr {1 + [lsearch $resTxt "other_side_pcb_brcd"]} ] ]
+  return [list $res $value] 
+} 
  
 
 # ***************************************************************************
@@ -1936,6 +1976,8 @@ proc ::RLWS::TestRLWS {} {
   foreach {date tim} [split [clock format [clock seconds] -format "%Y.%m.%d %H:%M:%S"] " "] {break}
   lappend testList [list ::RLWS::UpdateDB2 EA1004489579 uut hostDescription $date $tim Pass "" "" "Ilya Ginzburg" 12345678 987654 [info host] data2 data3]
   #::RLWS::MacReg 123456123456 EA1004489579
+  
+  lappend testList [list ::RLWS::Get_OtherSide_TraceID 21181408 ]
  
   foreach tst $testList {
     foreach {ret resTxt} [eval $tst] {}
