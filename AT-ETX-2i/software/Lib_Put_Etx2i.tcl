@@ -17,7 +17,7 @@ proc EntryBootMenu {} {
   Power all on
   RLTime::Delay 2
   set gaSet(fail) "Entry to Boot Menu fail"
-  set ret [Send $gaSet(comDut) \r "stop auto-boot.." 20]
+  set ret [Send $gaSet(comDut) \r "stop auto-boot.." 30]
   if {$ret!=0} {return $ret}
   set ret [Send $gaSet(comDut) \r\r "\[boot\]:"]
   if {$ret!=0} {return $ret}
