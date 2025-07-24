@@ -2630,9 +2630,10 @@ proc ReadEthPortStatus {port} {
   Status "Read EthPort Status of $port"
   set gaSet(fail) "Show status of port $port fail"
   set com $gaSet(comDut) 
-  Send $com "exit all\r" stam 0.25 
+  Send $com "exit all\r" stam 1; #0.25 
   set ret [Send $com "config port ethernet $port\r" ($port)]
   if {$ret!=0} {return $ret}
+  after 1000
   #set ret [Send $com "show status\r" ($port)]
   set ret [Send $com "show status\r" "more."]
   set bu $buffer
@@ -2644,6 +2645,7 @@ proc ReadEthPortStatus {port} {
     append bu $buffer
   }
   puts "ReadEthPortStatus bu:<$bu>"
+  Send $com "exit all\r" stam 1; #0.25 
   set res [regexp {([\w\d]+) Active} $bu - val]
   if {$res==0} {return -1}
   puts "ReadEthPortStatus val:<$val>"
