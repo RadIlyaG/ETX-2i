@@ -59,7 +59,7 @@ proc BuildTests {} {
     if {$::repairMode} {        
       ## don't do it if repairMode 
     } else {
-      lappend lTests Mac_BarCode 
+      lappend lTestNames Mac_BarCode 
     }
     
   } elseif {$b=="DNFV"} {    
