@@ -2634,6 +2634,7 @@ proc ReadEthPortStatus {port} {
   set ret [Send $com "config port ethernet $port\r" ($port)]
   if {$ret!=0} {return $ret}
   after 1000
+  Send $com "\r" stam 1; #0.25 
   #set ret [Send $com "show status\r" ($port)]
   set ret [Send $com "show status\r" "more."]
   set bu $buffer
