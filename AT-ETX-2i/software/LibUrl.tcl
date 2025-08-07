@@ -5,7 +5,7 @@ package require json
 ::http::register https 8445 [list tls::socket -tls1 1]
 package require md5
 
-package provide RLWS 1.8
+package provide RLWS 1.8.1
 
 namespace eval RLWS { 
 
@@ -45,7 +45,7 @@ proc ::RLWS::UpdateDB {barcode uutName hostDescription  date time status  failTe
 # ***************************************************************************
 # UpdateDB2
 # ***************************************************************************
-proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failTestsList failDescription dealtByServer traceId poNumber {data1 ""} {data2 ""} {data3 ""}} {
+proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failTestsList failDescription dealtByServer traceID poNumber {data1 ""} {data2 ""} {data3 ""}} {
   set dbPath "//prod-svm1/tds/Temp/SQLiteDB/"
   set dbName "JerAteStats.db" 
   if {$data1==""} {
@@ -55,11 +55,11 @@ proc ::RLWS::UpdateDB2 {barcode uutName hostDescription  date time status  failT
     set url_$f [::RLWS::_convertToUrl [set $f]]
   }
   if $::RLWS::debugWS {puts "UpdateDB2 <$barcode> <$uutName> <$hostDescription> <$date> <$time> <$status> <$failTestsList> <$failDescription> \
-  <$dealtByServer> <$traceId> <$poNumber> <$data1> <$data2> <$data3>"}
+  <$dealtByServer> <$traceID> <$poNumber> <$data1> <$data2> <$data3>"}
   set url "http://webservices03.rad.com:10211/ATE_WS/ws/tcc_rest/add_row2_with_db?barcode=$barcode&uutName=$url_uutName"
   append url "&hostDescription=$url_hostDescription&date=$date&time=$time&status=$status"
   append url "&failTestsList=$url_failTestsList&failDescription=$url_failDescription&dealtByServer=$url_dealtByServer"
-  append url "&dbPath=$dbPath&dbName=$dbName&traceID=$traceId&poNumber=$poNumber&data1=$url_data1&data2=$url_data2&data3=$url_data3" 
+  append url "&dbPath=$dbPath&dbName=$dbName&traceID=$traceID&poNumber=$poNumber&data1=$url_data1&data2=$url_data2&data3=$url_data3" 
   if $::RLWS::debugWS {puts "UpdateDB url:<$url>"}
 
   # set tok [::http::geturl $url -headers [list Authorization "Basic [base64::encode webservices:radexternal]"]]
@@ -1383,15 +1383,19 @@ proc ::RLWS::Update_DigitalSerialNumber {id serial} {
     if {$pa_ret != 0} {
       return [list $pa_ret $pa_resTxt]
     } else {
-      return [list -1 "Fail to get Digital Serial Code"]
+      return [list -1 "Fail to Update Digital Serial Code"]
     }
   }
     
   set value [lindex $resTxt [expr {1 + [lsearch $resTxt "DigitalSerial"]} ] ]
   if $::RLWS::debugWS {puts "res:<$res> value:<$value>"}
-  if {$value == "ID NUMBER NOT EXISTS"} {
+  # if {$value == "ID NUMBER NOT EXISTS"} {
+    # return [list -1 "Fail to Update Digital Serial Number, $value"]
+  # }
+  if {[string match {*ID NUMBER NOT EXISTS*} $value] ||\
+      [string match {*ALREADY CONNECTED TO ID NUMBER*} $value]} {
     return [list -1 "Fail to Update Digital Serial Number, $value"]
-  } 
+  }
   if {$value==0} {
     return [list 0 {}]
   } else {

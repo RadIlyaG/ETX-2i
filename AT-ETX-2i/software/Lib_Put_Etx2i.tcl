@@ -3121,7 +3121,7 @@ proc SetSWDownload {} {
                                                                
   set i 1
   set ret [Send $com "\r" "\[boot\]:" 2]  
-  while {($ret!=0)&&($i<=4)} {
+  while {($ret!=0)&&($i<=6)} {
     incr i
     set ret [Send $com "\r" "\[boot\]:" 2]  
   }
