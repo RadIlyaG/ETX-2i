@@ -688,17 +688,18 @@ proc DataTransmissionLoop {run} {
     #after 1000
     #Power all on 
     
-    if {$gaSet(dtag) && $gaSet(manSfp)} {
-      RLSound::Play information
-      set txt "Insert the SFPs"
-      set res [DialogBox -type "OK Cancel" -icon /images/question -title "DataTransmissionLoop Test" -message $txt]
-      update
-      if {$res!="OK"} {
-        return -2
-      } else {
-        set ret 0
-      }
-    }
+    # 14:19 18/08/2025
+    # if {$gaSet(dtag) && $gaSet(manSfp)} {
+      # RLSound::Play information
+      # set txt "Insert the SFPs"
+      # set res [DialogBox -type "OK Cancel" -icon /images/question -title "DataTransmissionLoop Test" -message $txt]
+      # update
+      # if {$res!="OK"} {
+        # return -2
+      # } else {
+        # set ret 0
+      # }
+    # }
     
     set ret [Login]
     if {$ret!=0} {return $ret}
