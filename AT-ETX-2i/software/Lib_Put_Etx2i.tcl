@@ -462,9 +462,15 @@ proc PS_IDTest {} {
   set ret [Send $com "exit all\r" ETX-2I]
   if {$ret!=0} {return $ret}
   set ret [Send $com "configure chassis\r" chassis]
-  if {$ret!=0} {return $ret}
+  if {$ret!=0} {
+    set gaSet(fail) "Can't get chassis"
+    return $ret
+  }
   set ret [Send $com "show environment\r" chassis]
-  if {$ret!=0} {return $ret}
+  if {$ret!=0} {
+    set gaSet(fail) "Can't get environment"
+    return $ret
+  }
   
   foreach {b r p d ps} [split $gaSet(dutFam) .] {}
   set psQty [regexp -all $ps $buffer]
