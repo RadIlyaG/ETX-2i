@@ -715,6 +715,18 @@ proc GetDbrName {} {
   set ret [GetDbrSW $barcode]
   puts "GetDbrName ret of GetDbrSW:$ret" ; update
   
+  if {$ret==0} {
+     set txt "Connect UTP and SFP cables from Generator ETX-204 to UUT's ports"
+     if $gaSet(dtag) {
+       append txt " 2 and 5 (DT)"
+     } else {
+       append txt " 1 and 2"
+     }
+     DialogBoxRamzor -aspect 2000 -type Ok -message $txt -icon images/info \
+         -title "UTP and SFP cables" -fg #730e8c -font {TkDefaultFont 13}
+        
+  }
+  
   focus -force $gaGui(tbrun)
 }
 
@@ -1100,6 +1112,7 @@ proc DownloadConfFile {cf cfTxt save} {
       }
       if {[string match *EXT* $cfTxt] || [string match *vvDefaultConf* $cfTxt]} {
         ## perform the configuration fast (without expected)
+        puts "EXT line:<$line>"; update
         set ret 0
         set buffer bbb
         RLSerial::Send $com "$line\r" 

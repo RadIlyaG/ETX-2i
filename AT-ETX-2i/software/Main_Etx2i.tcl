@@ -559,13 +559,13 @@ proc DataTransmissionUTP {run} {
   Status "EtxGen::GenConfig -packRate $packRate"
   RLEtxGen::GenConfig $gaSet(idGen1) -updGen all -packRate $packRate -stream $stream
   
-  if {$b=="19V"} {
+  if {$b=="19V" && $b=="19V"} {
     set ret [DnfvCross on] 
     if {$ret!=0} {return $ret}  
   }  
   
   set ret [DataTransmissionTestPerf [list 1 2] $packRate]
-  if {$ret==0} {
+  if {$ret==0 && $b=="19V"} {
     DnfvCross off
   }  
   return $ret
