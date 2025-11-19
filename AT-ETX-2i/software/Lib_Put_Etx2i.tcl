@@ -610,9 +610,14 @@ proc PS_IDTest {} {
   
   puts "gaSet(uutBootVers):<$gaSet(uutBootVers)>"
   puts "gaSet(dbrBVer):<$gaSet(dbrBVer)>"
+  if {[string index $gaSet(dbrBVer) 0]=="B"} {
+    set noBdbrBoorVer [string range $gaSet(dbrBVer) 1 end]
+  } else {
+    set noBdbrBoorVer $gaSet(dbrBVer)
+  }
   update
-  if {$gaSet(uutBootVers)!=$gaSet(dbrBVer)} {
-    set gaSet(fail) "Boot Version is \"$gaSet(uutBootVers)\". Should be \"$gaSet(dbrBVer)\""
+  if {$gaSet(uutBootVers)!=$noBdbrBoorVer} {
+    set gaSet(fail) "Boot Version is \"$gaSet(uutBootVers)\". Should be \"$noBdbrBoorVer\""
     return -1
   }
   set gaSet(uutBootVers) ""
@@ -1510,7 +1515,8 @@ proc ReadBootVersion {} {
     RLSerial::Waitfor $com buffer xxx 1
     puts "sec:$sec buffer:<$buffer>" ; update
     append ::buff $buffer
-    if {[string match {*to view available commands*} $buffer]==1} {      
+    # 08:35 17/09/2025 if {[string match {*to view available commands*} $buffer]==1} {}
+    if {[string match {*to view available commands*} $::buff]==1} {        
       set ret 0
       break
     }
