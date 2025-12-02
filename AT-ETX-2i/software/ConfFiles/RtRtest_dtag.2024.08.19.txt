@@ -15,7 +15,6 @@ match untagged
 exit
 flow "in"
 classifier "unt"
-no policer
 ingress-port ethernet 0/2
 egress-port svi 1
 no shutdown
@@ -28,7 +27,6 @@ no shutdown
 exit
 flow "user-in"
 classifier "unt"
-no policer
 ingress-port ethernet 0/5
 egress-port svi 2
 no shutdown
