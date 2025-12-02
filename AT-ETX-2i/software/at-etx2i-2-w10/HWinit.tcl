@@ -1,9 +1,9 @@
-set gaSet(javaLocation) C:\\Program\ Files\\Java\\jre1.8.0_181\\bin\\
+set gaSet(javaLocation) C:\\Program\ Files\\Java\\jre1.8.0_191\\bin\\
 
 switch -exact -- $gaSet(pair) {
   1 {
-      set gaSet(comDut)     4; #9
-      set gaSet(comGen1)    6; #2
+      set gaSet(comDut)     4
+      set gaSet(comGen1)    5
       console eval {wm geometry . +150+1}
       console eval {wm title . "Con 1"} 
       set gaSet(pioBoxSerNum) FT6Z7YQ4  
@@ -12,8 +12,8 @@ switch -exact -- $gaSet(pair) {
 #       set gaSet(pioDrc)      1
   }
   2 {
-      set gaSet(comDut)    5; #8
-      set gaSet(comGen1)   7; #5
+      set gaSet(comDut)    6
+      set gaSet(comGen1)   2
       console eval {wm geometry . +150+200}
       console eval {wm title . "Con 2"} 
       set gaSet(pioBoxSerNum) FTDAV94         
