@@ -365,12 +365,23 @@ proc FansTemperatureTest {} {
   }
   set res [regexp {FAN\s+Status[\-\s]+([\w\s]+)\s+Sensor} $buffer ma val]
   if {$res==0} {
-    set gaSet(fail) "Read FANs Status fail"
-    return -1
+    set res [regexp {FAN\s+Status Speed % of max rpm \(rpm\)[\-\s]+([\w\s]+)\s+Sensor} $buffer ma val]
+	if {$res==0} {
+	  set gaSet(fail) "Read FANs Status fail"
+	  return -1
+	} else {
+	  ## new SW, with fan speed
+	  set fanSpeed 1
+      set val1 [lrange [split $val] 0 1] ; ## 1 OK 9000 100 -> 1 OK
+	}	
+  } else {
+    ## old SW, no fan speed
+	set fanSpeed 0
+	 set val1 $val
   }
-  puts "val:<$val> fanSt:<$fanSt>"
-  if {$val!=$fanSt} {
-    set gaSet(fail) "FANs Status is \'$val\'. Should be \'$fanSt\'"
+  puts "fanSpeed:$fanSpeed val:<$val> val1:<$val1> fanSt:<$fanSt>"
+  if {$val1!=$fanSt} {
+    set gaSet(fail) "FANs Status is \'$val1\'. Should be \'$fanSt\'"
     return -1
   } else {
     set ret 0
