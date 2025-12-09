@@ -304,7 +304,7 @@ proc ButRun {} {
   console eval {.console delete 1.0 end}
   console eval {set ::tk::console::maxLines 100000}
   LoadBootErrorsFile
-  LoadNoTraceFile
+  #LoadNoTraceFile
   
 #   if {$gaSet(pair)!="1"} {
 #     $gaGui(labPairPerf1) configure -bg $gaSet(toTestClr)
@@ -666,7 +666,7 @@ proc GuiInventory {} {
   array unset gaTmpSet
   
   set parL [list sw dnfvProject dnfvEC dnfvCPU licDir dnfvVer dbrSW swPack \
-      dnfvdbrSW dbrBVerSw dbrBVer cpld dnfvBIOS]
+      dnfvdbrSW dbrBVerSw dbrBVer cpld dnfvBIOS askTraceId]
   foreach par $parL {
     if ![info exists gaSet($par)] {set gaSet($par) ??}
     set gaTmpSet($par) $gaSet($par)
@@ -746,6 +746,13 @@ proc GuiInventory {} {
     set fr  [frame $base.frUcf -bd 2 -relief groove]
       set gaGui(chbUcf) [ttk::checkbutton $fr.chbUcf -text "User Default Configuration File" -variable ::chbUcf -command {ToggleUCF}]
       pack $gaGui(chbUcf)  -pady 1 -padx 3 -anchor w 
+    pack $fr -fill x -pady 3
+    
+    set fr  [frame $base.frBoxType -bd 2 -relief groove]
+      set lblAskTraceId [ttk::label $fr.lblAskTraceId  -text "Ask for TraceID"] 
+      set gaGui(cmbAskTraceId) [ttk::combobox $fr.cmbAskTraceId -textvariable gaTmpSet(askTraceId) \
+        -values [list Yes No]  -justify center]
+      grid $lblAskTraceId $gaGui(cmbAskTraceId) -pady 1
     pack $fr -fill x -pady 3
   } elseif {$gaSet(dutBox)=="DNFV"} {
     foreach indx {DNFV} {      

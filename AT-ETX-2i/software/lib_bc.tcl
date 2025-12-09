@@ -187,9 +187,11 @@ proc CheckBcOk {readTrace} {
     }
     
     set radButInvoke 1
-    if {[lsearch $gaSet(noTraceL) $gaSet(DutFullName)]!="-1"} {
-      set radButInvoke 2
-    }
+    
+    #  12:00 07/12/2025
+    # if {[lsearch $gaSet(noTraceL) $gaSet(DutFullName)]!="-1"} {
+      # set radButInvoke 2
+    # }
     
     # set ret [DialogBox -title "ID Number" -text "Enter the ${uut}'s barcode" -ent1focus 1\
         # -type "Ok Cancel" -entQty 1 -entPerRow 1 -entLab DUT -icon /images/info]
@@ -249,7 +251,8 @@ proc ReadBarcode {} {
   global gaSet gaDBox
   puts "ReadBarcode" ;  update
   
-  if {[lsearch $gaSet(noTraceL) $gaSet(DutFullName)]!="-1"} {
+  # 11:26 07/12/2025 if {[lsearch $gaSet(noTraceL) $gaSet(DutFullName)]!="-1"} {}
+  if {$gaSet(askTraceId)=="No"} {
     set readTrace 0
   } else {
     if {[string match *BootDownload* $gaSet(startFrom)] || [string match *SetDownload* $gaSet(startFrom)]|| [string match *Pages* $gaSet(startFrom)]} {

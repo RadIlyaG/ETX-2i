@@ -221,6 +221,9 @@ proc SaveInit {} {
   
   puts $id "set gaSet(manSfp) \"$gaSet(manSfp)\""
   
+  if ![info exists gaSet(askTraceId)] {set gaSet(askTraceId) Yes}
+  puts $id "set gaSet(askTraceId) \"$gaSet(askTraceId)\""
+  
   close $id
    
 }
@@ -642,6 +645,12 @@ proc GetDbrName {} {
   file delete -force MarkNam_$barcode.txt
   #file mkdir [regsub -all / $res .]
   
+  ## 11:30 07/12/2025  delete prevous values
+  set parL [list askTraceId ]
+  foreach par $parL {
+    set gaSet($par) ??
+  }   
+  
   if {[file exists uutInits/$gaSet(DutInitName)]} {
     source uutInits/$gaSet(DutInitName)
     if ![info exists gaSet(DefaultCF)] {
@@ -727,7 +736,31 @@ proc GetDbrName {} {
         
   }
   
+  set parL [list askTraceId ]
+  set emptyParams "" ; #[list]
+  foreach par $parL {
+    if {$gaSet($par)=="??"} {
+      append emptyParams "$par \n"
+    }
+  }
+  if {[llength $emptyParams]>0} {
+    set gaSet(fail) "Define in INIT:\n\n$emptyParams"
+    RLSound::Play fail
+    Status "Test FAIL"  red
+    DialogBoxRamzor -aspect 2000 -type Ok -message $gaSet(fail) -icon images/error -title "INIT Problem"
+    pack $gaGui(frFailStatus)  -anchor w
+    $gaSet(runTime) configure -text ""
+    $gaGui(startFrom) configure -text "" -values [list]
+    set glTests [list]
+    set gaSet(curTest) ""
+    set ret -3
+  }  
+    
   focus -force $gaGui(tbrun)
+  if {$ret==0} {
+    Status "Ready"
+  }
+  return $ret
 }
 
 # ***************************************************************************
@@ -1549,7 +1582,7 @@ proc CheckFolder4NewFiles {path secNow} {
 # ***************************************************************************
 # LoadNoTraceFile
 # ***************************************************************************
-proc LoadNoTraceFile {} {
+proc neLoadNoTraceFile {} {
   global gaSet
   set gaSet(noTraceL) [list] 
   if ![file exists ./NoTrace.txt]  {
