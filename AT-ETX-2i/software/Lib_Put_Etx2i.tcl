@@ -4396,20 +4396,27 @@ proc License {mode} {
   }
     
   set fti_max_dist 12
-  set sec_in_week 604800.0
-  
+  # 07:46 10/12/2025 set sec_in_week 604800.0  
   # 15:22 16/06/2025 set pc_yw [clock format [clock seconds] -format "%Y-%V"]
-  set pc_yw [clock format [clock seconds] -format "%Y-%U"]
-  set pc_yw_sec [clock scan $pc_yw -format {%Y-%U}]
+  # 07:26 10/12/2025 set pc_yw [clock format [clock seconds] -format "%Y-%U"]
+  # 07:26 10/12/2025 set pc_yw_sec [clock scan $pc_yw -format {%Y-%U}]
+  set pc_y [clock format [clock seconds] -format "%Y"]
+  set pc_w [clock format [clock seconds] -format "%V"]
+  set pc_weeks [expr {$pc_y * 52 + $pc_w}]  
   
-  set uut_yw_sec [clock scan $yw -format {%Y-%U}]
-  
-  
-  set dist [format %.4s  [expr {(abs($pc_yw_sec - $uut_yw_sec) / $sec_in_week)}]]
-  puts "yw:<$yw> pc_yw:<$pc_yw> uut_yw_sec:<$uut_yw_sec> pc_yw_sec:<$pc_yw_sec> "
+  # 07:28 10/12/2025set uut_yw_sec [clock scan $yw -format {%Y-%U}]
+  foreach {uut_y uut_w} [split $yw -] {}
+  set uut_weeks [expr {$uut_y * 52 + $uut_w}]
+    
+  # 07:32 10/12/2025 set dist [format %.4s  [expr {(abs($pc_yw_sec - $uut_yw_sec) / $sec_in_week)}]]
+  # 07:32 10/12/2025 puts "yw:<$yw> pc_yw:<$pc_yw> uut_yw_sec:<$uut_yw_sec> pc_yw_sec:<$pc_yw_sec> "
+  set dist [expr {abs($pc_weeks - $uut_weeks)}]
+  puts "pc_y:<$pc_y> pc_w:<$pc_w>  pc_weeks:<$pc_weeks>"
+  puts "yw:<$yw> uut_y:<$uut_y> uut_w:<$uut_w>  uut_weeks:<$uut_weeks>"
   puts "fti_max_dist:<$fti_max_dist> dist:<$dist>"
   if {$dist>=$fti_max_dist} {
-    set gaSet(fail) "Date Code $yw. Distance $dist. Should be less $fti_max_dist"
+    #set gaSet(fail) "Date Code: $yw. Difference ($dist) should be less then $fti_max_dist"
+    set gaSet(fail) "Date Code: $yw exceeds $fti_max_dist weeks limit by [expr {$dist - $fti_max_dist}] weeks"
     return -1
   }
   
