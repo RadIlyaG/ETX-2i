@@ -1,0 +1,5 @@
+# This directory is a Syncthing folder marker.
+# Do not delete.
+
+folderID: mumed-uy9fu
+created: 2025-12-08T14:30:59+02:00
