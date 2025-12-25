@@ -1510,9 +1510,10 @@ proc InformAboutNewFiles {} {
   if {$gaSet(radNet)==0} {return {} }
   set path [file dirname [pwd]]
   set pathTail [file tail $path]
+  set r_temp //prod-svm1/temp/IlyaG/$pathTail
   set secNow [clock seconds]
   set ::newFilesL [list]
-  puts "\n[MyTime] InformAboutNewFiles"
+  puts "\n[MyTime] InformAboutNewFile" 
   CheckFolder4NewFiles $path $secNow
   puts "::newFilesL:<$::newFilesL>"
   
@@ -1536,14 +1537,17 @@ proc InformAboutNewFiles {} {
       foreach {s} $::newFilesL {
         append mess "\r$s\n"
       }
-      append mess "\rfile://R:\\IlyaG\\$pathTail\r"
+      # 13:06 16/12/2025 append mess "\rfile://R:\\IlyaG\\$pathTail\r"
+      # R:\\IlyaG\\$pathTail
+      append mess "\rfile://$r_temp\r"
       SendMail $mlist $mess
-      if ![file exists R:/IlyaG/$pathTail] {
-        file mkdir R:/IlyaG/$pathTail
+      #send_smtp_mail $mlist -body $mess -att $::newFilesL
+      if ![file exists $r_temp] {
+        file mkdir $r_temp
       }
       #set msg "A message regarding\n\n"
       foreach fi $::newFilesL {
-        catch {file copy -force $fi R:/IlyaG/$pathTail } res
+        catch {file copy -force $fi $r_temp } res
         puts "file:<$fi>, res of copy:<$res>"
       }
       update
@@ -1571,12 +1575,12 @@ proc CheckFolder4NewFiles {path secNow} {
         if [string match {*init*.tcl} $item] {
           ## don take this file
         } else {
-          set dirname [file dirname $item]
+          set dirname [file dirname $item]          
           if {[string match *ConfFiles* $dirname] ||\
               [string match *uutInits* $dirname] ||\
               [string match *TeamLeaderFiles* $dirname]} {
             lappend ::newFilesL $item
-          }
+          }          
         }
       }
     }

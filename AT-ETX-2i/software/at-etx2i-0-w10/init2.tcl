@@ -1,6 +1,6 @@
-set gaGui(xy) +398+361
-set gaSet(entDUT) "ETX-2I/H/ACR/19/RTR"
-set gaSet(DutInitName) "ETX-2I.H.ACR.19.RTR.tcl"
+set gaGui(xy) +348+347
+set gaSet(entDUT) "ETX-2I/ACR/19/PTP/RTR"
+set gaSet(DutInitName) "ETX-2I.ACR.19.PTP.RTR.tcl"
 set gaSet(performShortTest) "0"
 set gaSet(eraseTitle) "0"
 set gaSet(ddrMultyQty) "5"
@@ -8,3 +8,4 @@ set gaSet(DGTestQty) "3"
 set gaSet(DGTestLoopBreak) "1"
 set gaSet(performDownloadSteps) "1"
 set gaSet(manSfp) "1"
+set gaSet(askTraceId) "No"

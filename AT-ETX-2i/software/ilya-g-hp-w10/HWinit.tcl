@@ -1,5 +1,8 @@
-set pair [lindex $argv 0]
-set gaSet(pair) $pair
+set gaSet(javaLocation) C:\\Program\ Files\\Java\\jre1.8.0_191\\bin\\
+#set pair [lindex $argv 0]
+#set gaSet(pair) $pair
+
+puts "pair1:$gaSet(pair)"
 
 switch -exact -- $gaSet(pair) {
   1 {

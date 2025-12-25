@@ -10,6 +10,7 @@ if [file exists c:/TEMP_FOLDER] {
 }
 source lib_DeleteOldApp.tcl
 DeleteOldApp
+source lib_Syncthing.tcl
 
 set host_name  [info host]
 if {[string match *avraham-bi* $host_name] || [string match *david-ya* $host_name] || [string match *ofer-m-* $host_name]} {
@@ -29,21 +30,23 @@ if 1 {
     }  
   }
   if {$gaSet(radNet)} {
-    set mTimeTds [file mtime //prod-svm1/tds/install/ateinstall/jate_team/autosyncapp/rlautosync.tcl]
-    set mTimeRL  [file mtime c:/tcl/lib/rl/rlautosync.tcl]
-    puts "mTimeTds:$mTimeTds mTimeRL:$mTimeRL"
-    if {$mTimeTds>$mTimeRL} {
-      puts "$mTimeTds>$mTimeRL"
-      file copy -force //prod-svm1/tds/install/ateinstall/jate_team/autosyncapp/rlautosync.tcl c:/tcl/lib/rl
-      after 2000
-    }
-    set mTimeTds [file mtime //prod-svm1/tds/install/ateinstall/jate_team/autoupdate/rlautoupdate.tcl]
-    set mTimeRL  [file mtime c:/tcl/lib/rl/rlautoupdate.tcl]
-    puts "mTimeTds:$mTimeTds mTimeRL:$mTimeRL"
-    if {$mTimeTds>$mTimeRL} {
-      puts "$mTimeTds>$mTimeRL"
-      file copy -force //prod-svm1/tds/install/ateinstall/jate_team/autoupdate/rlautoupdate.tcl c:/tcl/lib/rl
-      after 2000
+    if 0 {
+      set mTimeTds [file mtime //prod-svm1/tds/install/ateinstall/jate_team/autosyncapp/rlautosync.tcl]
+      set mTimeRL  [file mtime c:/tcl/lib/rl/rlautosync.tcl]
+      puts "mTimeTds:$mTimeTds mTimeRL:$mTimeRL"
+      if {$mTimeTds>$mTimeRL} {
+        puts "$mTimeTds>$mTimeRL"
+        file copy -force //prod-svm1/tds/install/ateinstall/jate_team/autosyncapp/rlautosync.tcl c:/tcl/lib/rl
+        after 2000
+      }
+      set mTimeTds [file mtime //prod-svm1/tds/install/ateinstall/jate_team/autoupdate/rlautoupdate.tcl]
+      set mTimeRL  [file mtime c:/tcl/lib/rl/rlautoupdate.tcl]
+      puts "mTimeTds:$mTimeTds mTimeRL:$mTimeRL"
+      if {$mTimeTds>$mTimeRL} {
+        puts "$mTimeTds>$mTimeRL"
+        file copy -force //prod-svm1/tds/install/ateinstall/jate_team/autoupdate/rlautoupdate.tcl c:/tcl/lib/rl
+        after 2000
+      }
     }
     if 1 {
       set mTimeTds [file mtime //prod-svm1/tds/install/ateinstall/jate_team/LibUrl_WS/LibUrl.tcl]
@@ -67,32 +70,56 @@ if 1 {
   set d2 [file normalize  C:/download]
   
   if {$gaSet(radNet)} {
-      if {$::repairMode || [string match *ilya-g* [info host]]} {
-        set emailL [list]
-      } else {
-        set emailL {{yulia_s@rad.com} {} {} }
-      }  
-    } else {
+    if {$::repairMode || [string match *ilya-g* [info host]]} {
       set emailL [list]
-    }
-  
-  set ret [RLAutoSync::AutoSync "$s1 $d1 $s2 $d2" -noCheckFiles {init*.tcl skipped.txt  *.db} \
-  -noCheckDirs {temp OLD old} -jarLocation $::RadAppsPath -javaLocation $gaSet(javaLocation) \
-  -emailL $emailL -putsCmd 1  -radNet $gaSet(radNet)]
-  #console show
-  puts "ret:<$ret>"
-  set gsm $gMessage
-  foreach gmess $gMessage {
-    puts "$gmess"
+    } else {
+      set emailL {{yulia_s@rad.com} {} {} }
+    }  
+  } else {
+    set emailL [list]
   }
-  update
-  if {$ret=="-1"} {
-    set res [tk_messageBox -icon error -type yesno -title "AutoSync"\
-    -message "The AutoSync process did not perform successfully.\n\n\
-    Do you want to continue? "]
-    if {$res=="no"} {
-      SQliteClose
-      exit
+    
+  if 1 {
+    #set emailL {ilya_g@rad.com}
+    set r_temp //prod-svm1/temp/IlyaG/[file tail [file dirname [pwd]]]
+    source LibEmail.tcl
+    foreach {ret resTxt} [CheckSyncthingLocalAdditions [list $d1 $d2] $emailL $r_temp] {}
+    puts "SyTh ret:<$ret>"
+    puts "SyTh resTxt:<$resTxt>"
+    set return_list "ret:<$ret>\nresTxt:<$resTxt>"
+    if {$ret=="-1"} {
+      send_smtp_mail ilya_g@rad.com -subject "Message from Tester [string toupper [info host]]" \
+          -body $return_list
+      if 0 {
+        set res [tk_messageBox -icon error -type yesno -title "AutoSync"\
+          -message "The AutoSync process did not perform successfully.\n\n\
+          Do you want to continue? "]
+        if {$res=="no"} {
+          exit
+        }
+      }
+    }
+  }
+  
+  if 1 {
+    set ret [RLAutoSync::AutoSync "$s1 $d1 $s2 $d2" -noCheckFiles {init*.tcl skipped.txt *.db .stignore} \
+    -noCheckDirs {temp OLD old .stfolder} -jarLocation $::RadAppsPath -javaLocation $gaSet(javaLocation) \
+    -emailL $emailL -putsCmd 1  -radNet $gaSet(radNet)]
+    #console show
+    puts "ret:<$ret>"
+    set gsm $gMessage
+    foreach gmess $gMessage {
+      puts "$gmess"
+    }
+    update
+    if {$ret=="-1"} {
+      set res [tk_messageBox -icon error -type yesno -title "AutoSync"\
+      -message "The AutoSync process did not perform successfully.\n\n\
+      Do you want to continue? "]
+      if {$res=="no"} {
+        SQliteClose
+        exit
+      }
     }
   }
   

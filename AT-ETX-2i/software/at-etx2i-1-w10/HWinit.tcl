@@ -1,4 +1,5 @@
-set gaSet(javaLocation) C:\\Program\ Files\\Java\\jre1.8.0_181\\bin\\
+set gaSet(javaLocation) C:\\Program\ Files\\Java\\jre1.8.0_191\\bin\\
+
 
 switch -exact -- $gaSet(pair) {
   1 {
